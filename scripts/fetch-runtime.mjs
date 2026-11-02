@@ -75,7 +75,16 @@ async function main() {
       process.exit(1);
     }
   }
-  console.log(`\nDone. ${skipped} already present, ${(total / 1048576).toFixed(1)} MB downloaded.`);
+  // Browser download-manager extensions may hijack ZIP responses, including XHR.
+  // Keep byte-identical local aliases using an extension that IDM will not intercept.
+  for (const [name, alias] of [
+    ["wine1.7.55-v8-min-online.zip", "wine1.7.55-v8-min-online.asset"],
+    ["fullWine1.7.55-v8.zip", "fullWine1.7.55-v8.asset"],
+  ]) {
+    const src = path.join(ROOT, "fs", name);
+    const dest = path.join(ROOT, "fs", alias);
+    if (fs.existsSync(src) && !fs.existsSync(dest)) fs.copyFileSync(src, dest);
+  }  console.log(`\nDone. ${skipped} already present, ${(total / 1048576).toFixed(1)} MB downloaded.`);
   console.log("Run `npm start` and open http://localhost:8097");
 }
 

@@ -26,7 +26,7 @@
 // a sub-path (GitHub Pages serves project sites at /<repo>/).
 const SITE_BASE = location.pathname.endsWith("/")
   ? location.pathname
-  : location.pathname.replace(/[^/]*$/, "/");
+  : location.pathname.replace(/[^/]*$/, "");
 const RUNTIME_BASE = SITE_BASE + "runtime/";
 const FS_BASE = SITE_BASE + "fs/";
 const ROOT_ZIP = "fullWine1.7.55-v8";
@@ -148,6 +148,11 @@ function installXhrInterceptor() {
     // root-zip chunk fetches. A static host (GitHub Pages) has no such route,
     // so rewrite it to the same-origin fs/ directory that holds the zips.
     if (u.startsWith("/api/fs/")) u = FS_BASE + u.slice("/api/fs/".length);
+    // IDM browser integration can intercept .zip XHR responses (204); serve Wine archives via a neutral suffix.
+    if (location.hostname === "127.0.0.1" || location.hostname === "localhost") {
+      u = u.replace("wine1.7.55-v8-min-online.zip", "wine1.7.55-v8-min-online.asset")
+           .replace("fullWine1.7.55-v8.zip", "fullWine1.7.55-v8.asset");
+    }
     this.__wap_url = u;
     return origOpen.call(this, method, u, async !== false, user, pass);
   };
@@ -346,7 +351,9 @@ function refreshEntryPicker() {
     els.entryPicker.appendChild(opt);
   }
   els.entryPickerWrap.hidden = false;
-  setEntry(state.candidateExes[0]);
+  const preferred = state.candidateExes.find(f => /(^|\/)(EMPIRESX|EMPIRES)\.EXE$/i.test(f.path));
+  els.entryPicker.value = (preferred || state.candidateExes[0]).path;
+  setEntry(preferred || state.candidateExes[0]);
 }
 
 function setEntry(stagedFile) {
@@ -453,8 +460,13 @@ async function handleFolder(fileList) {
 async function handleZip(file) {
   if (!file) return;
   if (typeof JSZip === "undefined") {
-    log("JSZip isn't loaded yet — try again in a moment.", "error");
-    return;
+    try {
+      setStatus("Đang nạp bộ đọc ZIP...");
+      await loadScript(RUNTIME_BASE + "jszip.min.js");
+    } catch (error) {
+      log(`ZIP load failed: ${error.message}`, "error");
+      return;
+    }
   }
   clearStaged();
   const buf = await file.arrayBuffer();
