@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#121915">
+<link rel="icon" href="./favicon.svg" type="image/svg+xml">
+<meta name="description" content="Chơi Age of Empires 1997 Trial trong trình duyệt. Game gốc chạy qua BoxedWine WebAssembly, không cần file EXE.">
+<title>Chơi Đế Chế 1997 | AOE Web VN</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#eee9d9;background:#0c100d}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:radial-gradient(ellipse at 55% 8%,#1e3127,#0b100d 70%)}
+header{height:67px;border-bottom:1px solid #e9c77c30;background:#0d1510e8;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 clamp(12px,3vw,36px)}
+h1{font:700 20px Georgia,serif;margin:0;white-space:nowrap}
+.brand{display:flex;align-items:center;gap:10px}.logo{font:700 19px Georgia,serif;padding:8px;border:1px solid #bb9c61;border-radius:8px;color:#f2d388}
+.tag{color:#b7c1b4;font-size:12px}
+button,.nav{background:#1d2a20;border:1px solid #cbb07055;border-radius:9px;color:#eee7cd;padding:10px 14px;font:600 12px system-ui;cursor:pointer;text-decoration:none}
+button:hover,.nav:hover{background:#354333}button:focus-visible,.nav:focus-visible{outline:2px solid #e6cc90}
+header nav{display:flex;align-items:center;gap:8px}
+main{max-width:1060px;margin:0 auto;padding:20px 20px 38px}
+.topline{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:0 0 14px}
+.topline h2{font:700 26px Georgia,serif;margin:0 0 5px}
+.topline p{font-size:13px;color:#aab6aa;margin:0}
+.note{font-size:11px;color:#e8c27f;border:1px solid #b5974d62;background:#372c171c;border-radius:8px;padding:9px 12px;max-width:330px}
+#stage{position:relative;width:min(808px,100%);max-width:808px;margin:0 auto;background:#050806;border:4px solid #74603c;border-radius:12px;overflow:hidden;box-shadow:0 22px 62px #0008;aspect-ratio:808/608}
+#screen-container{position:relative;width:100%;height:100%}
+#canvas{display:block;width:100%;height:100%;object-fit:fill;image-rendering:pixelated;outline:none}
+#frame-wrap,#appFrame{display:none}
+#overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(circle at 50% 35%,#223326,#0b170e 67%);z-index:2;transition:opacity .45s}
+#overlay.is-hidden{opacity:0;pointer-events:none}
+#overlay .loading{text-align:center;max-width:450px}
+.loading .emblem{display:grid;place-items:center;width:76px;height:76px;margin:0 auto 22px;border:2px solid #d7b971;border-radius:18px;color:#f0d898;font:bold 27px Georgia,serif}
+.loading h2{font:700 28px Georgia,serif;margin:0 0 12px}
+.loading p{font-size:13px;line-height:1.65;color:#bec9bc}
+.spinner{display:block;width:48px;height:48px;margin:18px auto;border:3px solid #ceb67844;border-top-color:#e1c57d;border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#bootStatus{color:#d7bb79;font-size:13px;line-height:1.5;word-wrap:break-word}
+#bootProgress{display:block;margin:12px auto;width:min(320px,85vw);accent-color:#d6b879}
+.under{display:flex;justify-content:space-between;gap:12px;align-items:center;margin:14px auto 0;max-width:960px}
+.under p{font-size:12px;line-height:1.6;color:#abb8a9;margin:0}
+.under a{color:#ebd38d}
+#logDetails{max-width:960px;margin:15px auto 0;border:1px solid #ffffff20;border-radius:8px}
+#logDetails summary{cursor:pointer;padding:9px 12px;color:#afb8ab;font-size:12px}
+#logOutput{white-space:pre-wrap;overflow:auto;max-height:170px;padding:12px;font:11px/1.5 ui-monospace,Consolas,monospace;color:#bac8bc}
+.hidden-controls{display:none!important}
+#stage:fullscreen{max-width:none;display:grid;place-items:center;border:0;border-radius:0;background:#000}
+#stage:fullscreen #screen-container{width:min(100vw,133.33vh);height:min(100vh,75vw)}
+@media(max-width:720px){header{height:auto;min-height:64px;flex-wrap:wrap;padding:10px 12px}header nav{width:100%;justify-content:flex-end}.tag{display:none}main{padding:14px 8px}.topline{flex-direction:column;align-items:flex-start;padding:0 8px}.topline h2{font-size:21px}#stage{border-width:2px;border-radius:7px}.under{padding:0 8px}}
+@media(prefers-reduced-motion:reduce){.spinner{animation:none}#overlay{transition:none}}
+</style>
+</head>
+<body data-aoe-auto="trial">
+<header>
+  <div class="brand"><span class="logo">ĐC</span><div><h1>Đế Chế Web VN</h1><span class="tag">Age of Empires · 1997 Trial · Chơi trực tiếp</span></div></div>
+  <nav>
+    <a class="nav" href="./launcher.html">Bộ game riêng</a>
+    <button id="reloadGame" type="button">↻ Chơi lại</button>
+    <button id="fullscreenGame" type="button">⛶ Toàn màn hình</button>
+  </nav>
+</header>
+<main>
+  <div class="topline">
+    <div><h2>Age of Empires 1997</h2><p>Chạy game Windows gốc trên web · Không cần cài đặt hay chọn EXE</p></div>
+    <div class="note">Bản <strong>Trial</strong>, không phải AOE/Rise of Rome đầy đủ. Hiện chưa Việt hóa được nội dung trong game.</div>
+  </div>
+  <div id="stage">
+    <div id="screen-container">
+      <canvas id="canvas" tabindex="0" aria-label="Màn hình Age of Empires"></canvas>
+      <div id="frame-wrap"><iframe id="appFrame" title="64-bit fallback"></iframe></div>
+    </div>
+    <div id="overlay" role="status" aria-live="polite">
+      <div class="loading">
+        <span class="emblem">AOE</span>
+        <h2>Đang mở Đế Chế...</h2>
+        <span class="spinner" aria-hidden="true"></span>
+        <div id="welcomeMessage"><p>Đang tải bộ game gốc và chuẩn bị trình giả lập.</p></div>
+        <p id="bootStatus">Đang bắt đầu...</p>
+        <progress id="bootProgress" max="100" value="2"></progress>
+        <button type="button" id="retryGame" hidden>Thử tải lại</button>
+      </div>
+    </div>
+  </div>
+  <div class="under">
+    <p>Nhấp vào màn hình để điều khiển. Trên laptop nên dùng <strong>Chrome hoặc Edge</strong> và bàn phím/chuột.</p>
+    <p><a href="https://www.boxedwine.org/" target="_blank" rel="noopener">BoxedWine</a> · <a href="./README.VI.md">Thông tin & EULA</a></p>
+  </div>
+  <details id="logDetails"><summary>Nhật ký kỹ thuật (chỉ mở khi game lỗi)</summary><div id="logOutput"></div></details>
+</main>
+<div class="hidden-controls" aria-hidden="true">
+<div id="appDropzone"></div>
+<input type="file" id="exeInput"><input type="file" id="folderInput"><input type="file" id="zipInput">
+<button id="pickBtn"></button><button id="pickFolderBtn"></button><button id="pickZipBtn"></button>
+<div id="entryPickerWrap"><select id="entryPicker"></select></div>
+<div id="fileInfo"></div><button id="runBtn"></button><button id="demoBtn"></button>
+<button id="saveStateBtn"></button><button id="stopBtn"></button>
+<input type="radio" id="arch32" checked><input type="radio" id="arch64">
+</div>
+<script src="./app.js"></script>
+<script>
+document.getElementById("reloadGame").addEventListener("click",()=>location.reload());
+document.getElementById("retryGame").addEventListener("click",()=>location.reload());
+document.getElementById("fullscreenGame").addEventListener("click",async()=>{
+  try {if(document.fullscreenElement)await document.exitFullscreen();else await document.getElementById("stage").requestFullscreen();}catch(e){console.warn(e);}
+});
+const overlay=document.getElementById("overlay");
+const status=document.getElementById("bootStatus");
+const observer=new MutationObserver(()=>{
+  const s=status.textContent||"";
+  if (/Running|Launching|Starting/.test(s)) {
+    setTimeout(()=>{overlay.classList.add("is-hidden");document.getElementById("canvas").focus()},5500);
+    observer.disconnect();
+  }
+});
+observer.observe(status,{childList:true,subtree:true,characterData:true});
+</script>
+</body>
+</html>

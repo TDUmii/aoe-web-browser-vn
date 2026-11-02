@@ -889,6 +889,34 @@ els.dropzone.addEventListener("drop", async (e) => {
   }
 });
 
+// Public noncommercial AOE 1997 Trial: all original demo files + EULA bundled.
+// This is the original demo, not the complete Rise of Rome expansion.
+async function launchBundledTrial() {
+  const intro = document.getElementById("welcomeMessage");
+  try {
+    setStatus("Đang tải AOE 1997 Trial (~24 MB)...");
+    log("Loading original Age of Empires 1997 Trial, with its EULA.");
+    await loadBoxedwineDeps();
+    const reply = await fetch(SITE_BASE + "demo/aoe-trial-1997.dat");
+    if (!reply.ok) throw new Error("HTTP " + reply.status + " loading AOE trial");
+    const buffer = await reply.arrayBuffer();
+    clearStaged();
+    await stageFromZipBuffer(buffer, "AOE 1997 Trial");
+    const selected = state.candidateExes.find(f => /(^|\/)EMPIRES\.EXE$/i.test(f.path));
+    if (!selected) throw new Error("EMPIRES.EXE missing from game archive");
+    setEntry(selected);
+    setStatus("Đang khởi động Age of Empires...");
+    if (intro) intro.textContent = "Đang mở màn hình Đế Chế...";
+    await bootAndRun();
+  } catch (err) {
+    log("AOE startup failed: " + err.message, "error");
+    setStatus("Không thể mở AOE: " + err.message);
+    if (intro) intro.textContent = "Không tải được game. Nhấn Tải lại để thử.";
+    const retry = document.getElementById("retryGame");
+    if (retry) retry.hidden = false;
+  }
+}
+
 // After an exe is staged, sniff its PE header: on 64-bit mode a 32-bit-only
 // exe can't run (and vice versa) — flip the toggle automatically so the user
 // doesn't have to know what they're holding.
@@ -910,4 +938,7 @@ els.canvas.tabIndex = 0;
 
 log("WindowsAppPlayer ready. Drop a .exe/.msi, or click 'Try demo (7-Zip)'.");
 log("Modern/64-bit apps: flip the wine64 toggle — first boot fetches its rootfs once.");
+if (document.body.dataset.aoeAuto === "trial") {
+  void launchBundledTrial();
+}
 })();
