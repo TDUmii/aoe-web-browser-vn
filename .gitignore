@@ -5,3 +5,20 @@ demo/
 server.log
 server.err.log
 .DS_Store
+
+# Không đưa dữ liệu AOE cá nhân lên Git
+_site/
+local-game/
+game-files/
+saves/
+*.exe
+*.dll
+*.drs
+*.slp
+*.scn
+*.rar
+*.7z
+*.zip
+.env
+.env.*
+.playwright-cli/
