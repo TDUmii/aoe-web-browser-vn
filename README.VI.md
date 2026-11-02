@@ -1,30 +1,32 @@
-# Đế Chế Web VN
+# Đế Chế Web VN - Chơi nhanh
 
-Đây là phiên bản giao diện tiếng Việt dựa trên [WindowsAppPlayer](https://github.com/bassdrum4/windowsappplayer) để thử chạy **Age of Empires 1 / Rise of Rome bản Windows 32-bit** trong trình duyệt.
+**Website:** https://tdumii.github.io/aoe-web-browser-vn/
 
-**Trạng thái:** Launcher chạy được. Chưa kiểm chứng gameplay AOE vì chưa tìm được dữ liệu game trên máy. Đừng nhầm với một bản AOE đã tích hợp và chơi được ngay.
+## Cách chơi
 
-## Chạy trên máy
+Mở website là vào trang trò chơi Age of Empires 1 / Rise of Rome. Nội dung chơi được **nhúng trực tiếp từ dịch vụ Sky Farmer** tại https://aoe.skyvalley.me/ nên bạn không phải chuyển file EXE hay ZIP từ máy tính cũ.
 
-1. Mở PowerShell tại thư mục dự án.
-2. Chạy `npm run setup` để tải runtime Boxedwine/Wine nếu chưa có.
-3. Chạy `npm start`.
-4. Mở `http://localhost:8097/`.
-5. Chọn **Thư mục** chứa bản game đã được cài, hoặc tạo ZIP của thư mục game gồm `EMPIRES.EXE` / `EMPIRESX.EXE`, thư mục `DATA`, `SOUND`, v.v.
-6. Giữ chế độ **32-bit** và nhấn **Khởi chạy**.
+Nếu cửa sổ game không hiển thị hoặc gặp lỗi bàn phím, nhấn **☰ Tùy chọn > Mở game gốc** để mở trực tiếp dịch vụ Sky Farmer.
 
-Để kiểm chứng bộ giả lập trước, nhấn **Thử trình giả lập (7-Zip)**.
+## Thông tin quan trọng
 
-## Lưu ý thực tế
+- Đây là một trang truy cập nhanh với UI tiếng Việt. **Game thực tế và dữ liệu game do Sky Farmer lưu trữ/vận hành; repository này không chứa source AOE gốc hay bản dịch nội dung game.**
+- Trò chơi có thể thay đổi hoặc ngừng hoạt động theo dịch vụ Sky Farmer. Trang này không sao chép/cung cấp lại file game của họ.
+- Độ phân giải, đồ họa và ngôn ngữ bên trong AOE phụ thuộc vào Sky Farmer; trang này không nâng cấp texture hoặc Việt hóa nội dung game.
+- Không liên kết hay được Microsoft, Ensemble Studios hoặc Sky Farmer bảo trợ.
 
-- Các tệp AOE được chọn từ thiết bị của bạn, không được tải lên máy chủ.
-- Trang không bao gồm game, data, bản quyền hay bản dịch bên trong `LANGUAGE.DLL`.
-- Chỉ giao diện launcher đã Việt hóa; việc Việt hóa nội dung game chỉ có thể thực hiện sau khi xác nhận bản game và kiểm tra file ngôn ngữ.
-- Tương thích DirectDraw, âm thanh, tốc độ và lưu game vẫn cần được kiểm chứng thực tế.
-- Các file thay đổi trong bộ giả lập nằm ở RAM; dùng nút **Tải file lưu / thay đổi** trước khi làm mới trang.
-- Cải thiện kích thước hiển thị không tạo ra texture HD; muốn nét hơn thực sự cần bản game/asset tương ứng.
-- Repo chứa mã nguồn và công cụ; `runtime/`, `fs/`, `demo/` được tải bằng `npm run setup` và không commit vào repo.
+## Trình giả lập Windows cũ
 
-## Ghi công
+Bản thử nghiệm WindowsAppPlayer/Boxedwine trước đó được giữ lại tại:
 
-Dựa trên WindowsAppPlayer, Boxedwine, Wine và exebrowser. Giữ nguyên các thông báo giấy phép trong `LICENSE` và `NOTICE.md`.
+https://tdumii.github.io/aoe-web-browser-vn/launcher.html
+
+Bản này chỉ dành cho trường hợp bạn có sẵn thư mục AOE trên máy, không tích hợp game. Tương thích game gốc chưa được kiểm chứng.
+
+Để thử trên máy riêng: `npm run setup`, `npm start`, rồi truy cập `http://localhost:8097/launcher.html`.
+
+## Mã nguồn và giấy phép
+
+- Trang chủ tại `index.html` là phần giao diện nhúng của dự án.
+- Trình giả lập cũ dựa trên [WindowsAppPlayer](https://github.com/bassdrum4/windowsappplayer), [Boxedwine](https://www.boxedwine.org/) và Wine. Giữ nguyên `LICENSE` và `NOTICE.md` của upstream.
+- Không phân phối lại dữ liệu AOE của Microsoft.
