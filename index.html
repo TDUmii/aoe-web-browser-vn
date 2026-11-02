@@ -2,16 +2,75 @@
 <html lang="vi">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Vào chơi Age of Empires 1997 Trial | Đế Chế Web VN</title>
-<meta name="description" content="Mở game Age of Empires 1997 Trial trực tiếp trên trình duyệt, không cần tải EXE.">
-<link rel="icon" href="./favicon.svg" type="image/svg+xml">
-<meta http-equiv="refresh" content="1;url=./play.html">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<meta name="description" content="Chơi Đế Chế 1997 bản tiếng Việt ngay trên trình duyệt.">
+<title>Đế Chế Việt Hóa - Chơi Ngay</title>
 <style>
-body{margin:0;display:grid;place-items:center;min-height:100vh;background:#0c150f;color:#f3e9d7;font:16px system-ui;text-align:center;padding:20px}
-main{max-width:400px}h1{font:700 32px Georgia,serif}p{line-height:1.65;color:#bac4b5}a{display:block;padding:14px 20px;margin-top:22px;background:#d8ba78;color:#192117;border-radius:10px;text-decoration:none;font-weight:700}
+:root{color-scheme:dark}
+*{box-sizing:border-box}
+html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#000}
+body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+#screen-container{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#000}
+#canvas{display:block;width:min(100vw,133.333333vh);height:min(100vh,75vw);max-width:100%;max-height:100%;object-fit:fill;image-rendering:pixelated;outline:none}
+#frame-wrap,#appFrame{display:none!important}
+#overlay{position:fixed;inset:0;z-index:5;background:#000;display:grid;place-items:center;transition:opacity .4s}
+#overlay.is-hidden{opacity:0;pointer-events:none;visibility:hidden}
+#loading{width:min(310px,85vw);text-align:center;color:#d7d0bc}
+#loading .mark{font:700 36px Georgia,serif;letter-spacing:.05em;color:#dec184}
+#loading p{font:13px/1.7 system-ui,sans-serif;white-space:normal;color:#c1bdaf;margin:16px 0 12px}
+#bootStatus{font:12px/1.5 system-ui,sans-serif;color:#9b9e95;margin-top:11px}
+#bootProgress{display:block;width:100%;height:3px;accent-color:#cdb16e}
+#retryGame{background:#d1b67b;border:0;border-radius:7px;padding:9px 15px;color:#15140e;font-weight:700;cursor:pointer}
+[hidden],.hidden-controls{display:none!important}
+#debug{display:none;position:fixed;bottom:0;left:0;right:0;max-height:35vh;overflow:auto;padding:10px;background:#121212ed;color:#aee2ad;z-index:6;white-space:pre-wrap;font:11px Consolas,monospace}
+body.debug #debug{display:block}
+@media(prefers-reduced-motion:reduce){#overlay{transition:none}}
 </style>
-<script>location.replace(new URL("./play.html",location.href));</script>
 </head>
-<body><main><h1>Đế Chế Web VN</h1><p>Đang vào bản AOE 1997 Trial chơi trực tiếp, không cần chọn file game.</p><a href="./play.html">Nhấn để vào chơi Đế Chế</a></main></body>
+<body data-aoe-auto="trial">
+<div id="screen-container">
+  <canvas id="canvas" tabindex="0" aria-label="Age of Empires Việt hóa" title="Nhấn để điều khiển"></canvas>
+  <div id="frame-wrap"><iframe id="appFrame" title="Bộ giả lập"></iframe></div>
+</div>
+<div id="overlay" role="status" aria-live="polite">
+  <div id="loading">
+    <div class="mark">ĐẾ CHẾ</div>
+    <p id="welcomeMessage">Đang mở game...</p>
+    <progress id="bootProgress" max="100" value="1"></progress>
+    <div id="bootStatus">Đang chuẩn bị...</div>
+    <button id="retryGame" type="button" hidden>Thử lại</button>
+  </div>
+</div>
+<div class="hidden-controls" aria-hidden="true">
+  <div id="appDropzone"></div>
+  <input type="file" id="exeInput"><input type="file" id="folderInput"><input type="file" id="zipInput">
+  <button id="pickBtn"></button><button id="pickFolderBtn"></button><button id="pickZipBtn"></button>
+  <div id="entryPickerWrap"><select id="entryPicker"></select></div>
+  <div id="fileInfo"></div><button id="runBtn"></button><button id="demoBtn"></button>
+  <button id="saveStateBtn"></button><button id="stopBtn"></button>
+  <input type="radio" id="arch32" checked><input type="radio" id="arch64">
+</div>
+<div id="debug"><div id="logOutput"></div></div>
+<script src="./app.js"></script>
+<script>
+document.getElementById("retryGame").addEventListener("click",()=>location.reload());
+if(new URLSearchParams(location.search).has("debug"))document.body.classList.add("debug");
+const overlay=document.getElementById("overlay");
+const status=document.getElementById("bootStatus");
+let hidden=false;
+const observer=new MutationObserver(()=>{
+ const s=status.textContent||"";
+ if(!hidden&&/Running|Launching|Starting/.test(s)){
+   hidden=true;
+   setTimeout(()=>{overlay.classList.add("is-hidden");document.getElementById("canvas").focus()},6500);
+ }
+ if(/Không thể|Error|failed/i.test(s)){
+   hidden=false;
+   overlay.classList.remove("is-hidden");
+ }
+});
+observer.observe(status,{childList:true,subtree:true,characterData:true});
+</script>
+</body>
 </html>

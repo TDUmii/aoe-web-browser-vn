@@ -5,7 +5,7 @@ const root = process.cwd();
 const out = path.join(root, '_site');
 fs.rmSync(out, {recursive:true, force:true});
 fs.mkdirSync(out, {recursive:true});
-for (const p of ['index.html','app.js','favicon.svg','coi-serviceworker.js','LICENSE','NOTICE.md','README.VI.md','runtime','fs','demo','64']) {
+for (const p of ['index.html','play.html','launcher.html','app.js','favicon.svg','coi-serviceworker.js','LICENSE','NOTICE.md','README.VI.md','trial-eula.txt','runtime','fs','demo','assets','64']) {
   const from=path.join(root,p), to=path.join(out,p);
   if (!fs.existsSync(from)) { console.warn('Thiếu:',p); continue; }
   fs.cpSync(from,to,{recursive:true});

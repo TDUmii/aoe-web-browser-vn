@@ -148,6 +148,11 @@ function installXhrInterceptor() {
     // root-zip chunk fetches. A static host (GitHub Pages) has no such route,
     // so rewrite it to the same-origin fs/ directory that holds the zips.
     if (u.startsWith("/api/fs/")) u = FS_BASE + u.slice("/api/fs/".length);
+    // The bundled Vietnamese game uses a verified font-mapped Wine overlay.
+    // Keep the default original overlay for the manual launcher.
+    if (document.body.dataset.aoeAuto === "trial" && u.includes("wine1.7.55-v8-min-online.zip")) {
+      u = SITE_BASE + "assets/vn-wine-overlay.css?v=umi2";
+    }
     // IDM browser integration can intercept .zip XHR responses (204); serve Wine archives via a neutral suffix.
     if (location.hostname === "127.0.0.1" || location.hostname === "localhost") {
       u = u.replace("wine1.7.55-v8-min-online.zip", "wine1.7.55-v8-min-online.asset")
@@ -175,20 +180,14 @@ function installXhrInterceptor() {
     }
     const xhr = this;
     const reader = new FileReader();
+    const headers = xhr.__wap_headers || {};
+    const m = headers["range"] && /bytes=(\d+)-(\d+)?/.exec(headers["range"]);
+    const start = m ? Number(m[1]) : 0;
+    const end = m ? (m[2] ? Math.min(Number(m[2])+1, state.appZipBlob.size) : state.appZipBlob.size) : state.appZipBlob.size;
+    const chunk = m ? state.appZipBlob.slice(start, end) : state.appZipBlob;
     reader.onload = () => {
-      const bytes = new Uint8Array(reader.result);
-      const headers = xhr.__wap_headers || {};
-      let responseBytes = bytes;
-      let status = 200;
-      if (headers["range"]) {
-        const m = /bytes=(\d+)-(\d+)?/.exec(headers["range"]);
-        if (m) {
-          const start = parseInt(m[1], 10);
-          const end = m[2] ? Math.min(parseInt(m[2], 10) + 1, bytes.length) : bytes.length;
-          responseBytes = bytes.slice(start, end);
-          status = 206;
-        }
-      }
+      const responseBytes = new Uint8Array(reader.result);
+      const status = m ? 206 : 200;
       Object.defineProperty(xhr, "readyState", { value: 4, writable: true });
       Object.defineProperty(xhr, "status", { value: status, writable: true });
       let responseText = "";
@@ -204,7 +203,7 @@ function installXhrInterceptor() {
       if (xhr.onreadystatechange) xhr.onreadystatechange();
       if (xhr.onload) xhr.onload();
     };
-    reader.readAsArrayBuffer(state.appZipBlob);
+    reader.readAsArrayBuffer(chunk);
   };
 }
 
@@ -564,7 +563,9 @@ async function bootAndRun() {
   try {
     installXhrInterceptor();
     await loadBoxedwineDeps();
-    await buildAppZip();
+    if (!(document.body.dataset.aoeAuto === "trial" && state.appZipBlob)) {
+      await buildAppZip();
+    }
     await runShellWithConfig();
     els.screenContainer.classList.add("has-content");
     await startEmulator();
@@ -894,24 +895,28 @@ els.dropzone.addEventListener("drop", async (e) => {
 async function launchBundledTrial() {
   const intro = document.getElementById("welcomeMessage");
   try {
-    setStatus("Đang tải AOE 1997 Trial (~24 MB)...");
-    log("Loading original Age of Empires 1997 Trial, with its EULA.");
-    await loadBoxedwineDeps();
-    const reply = await fetch(SITE_BASE + "demo/aoe-trial-1997.dat");
-    if (!reply.ok) throw new Error("HTTP " + reply.status + " loading AOE trial");
-    const buffer = await reply.arrayBuffer();
-    clearStaged();
-    await stageFromZipBuffer(buffer, "AOE 1997 Trial");
-    const selected = state.candidateExes.find(f => /(^|\/)EMPIRES\.EXE$/i.test(f.path));
-    if (!selected) throw new Error("EMPIRES.EXE missing from game archive");
-    setEntry(selected);
-    setStatus("Đang khởi động Age of Empires...");
-    if (intro) intro.textContent = "Đang mở màn hình Đế Chế...";
+    setStatus("Đang tải Đế Chế Việt hóa...");
+    // Parallelize runtime startup and the compact pre-packaged game download.
+    // Let the browser's HTTP cache handle re-use; avoid a half-written CacheStorage entry.
+    const gamePromise = fetch(SITE_BASE + "demo/aoe-vn-trial.css?v=vn4")
+      .then(response => {
+        if (!response.ok) throw new Error("HTTP " + response.status + " downloading AOE VN");
+        return response.blob();
+      });    await loadBoxedwineDeps();
+    state.appZipBlob = await gamePromise; // Already rooted as userapp/ and compressed on the server.
+    state.pickedExe = {
+      name: "EMPIRES.EXE", originalName: "EMPIRES.EXE", path: "EMPIRES.EXE",
+      bytes: new Uint8Array(),
+    };
+    state.arch = "32";
+    log("AOE VN ready: compressed ZIP loaded directly (" + formatBytes(state.appZipBlob.size) + ").");
+    setStatus("Đang khởi động Đế Chế...");
+    if (intro) intro.textContent = "Đang mở game...";
     await bootAndRun();
   } catch (err) {
     log("AOE startup failed: " + err.message, "error");
-    setStatus("Không thể mở AOE: " + err.message);
-    if (intro) intro.textContent = "Không tải được game. Nhấn Tải lại để thử.";
+    setStatus("Không thể mở Đế Chế: " + err.message);
+    if (intro) intro.textContent = "Không tải được game. Hãy tải lại trang.";
     const retry = document.getElementById("retryGame");
     if (retry) retry.hidden = false;
   }

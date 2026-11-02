@@ -1,45 +1,46 @@
 # Đế Chế Web VN
 
-**Mở website để vào game AOE ngay:** https://tdumii.github.io/aoe-web-browser-vn/
+**Vào thẳng game:** https://tdumii.github.io/aoe-web-browser-vn/
 
-**Trang chơi trực tiếp:** https://tdumii.github.io/aoe-web-browser-vn/play.html
+AOE 1997 **Trial** được chạy trong trình duyệt bằng Boxedwine + Wine + WebAssembly. Trang mở trực tiếp canvas game, không có cột nút hoặc yêu cầu chọn EXE/ZIP.
 
-## Thực tế đang có
+## Việt hóa trong game
 
-- Age of Empires **1997 Trial** (bản demo Windows gốc) chạy trên BoxedWine/WASM trong trình duyệt.
-- Không yêu cầu chọn EXE, cài app hay truyền file game từ laptop khác; trình duyệt tự tải gói trial khoảng 24 MB và runtime.
-- Trong kiểm thử local, game hiện menu gốc và có thể vào **Single Player Menu / Random Map** bằng bàn phím.
-- Đây chỉ là **bản demo của AOE 1 năm 1997**, không phải bản thương mại đầy đủ và không bao gồm Rise of Rome.
-- **Chưa có tiếng Việt bên trong game**. Bộ Việt hóa cộng đồng dùng TCVN3 và bị sai font khi chạy dưới Wine bản này; chưa nên tuyên bố Việt hóa thành công.
-- Chưa xác nhận chơi hết một trận hay khả năng lưu trò chơi dài hạn. Có thể gặp hạn chế hiệu năng, âm thanh hoặc chức năng online.
+- Bản dịch dựa trên **gói Việt hóa cộng đồng aoe.vn**: https://beyeucup.aoe.vn/cach-choi-aoe/huong-dan-tai-va-cai-dat-ban-aoe-viet-hoa-chuan-tieng-viet-5752.html
+- Các resource `STRINGTABLE` của `Language.dll` được giữ theo **TCVN3 (ABC)** vì AOE 1997 dùng API ANSI; chỉ chuyển sang Unicode khiến nhiều ký tự thành `?`.
+- Tên font trong bản DLL được đổi từ `.VNArial` sang **UmiVN**. Bảng ánh xạ glyph của hai font nguồn mở (Liberation Sans Regular/Bold) trong bộ Wine được điều chỉnh để đọc đúng dữ liệu TCVN3. Phần font được đổi tên theo điều khoản **SIL Open Font License**; văn bản giấy phép đi kèm trong runtime archive.
+- **Đã kiểm thử được tiếng Việt có dấu ở menu chính**: Chơi đơn, Chơi nối mạng, Trợ giúp, Kịch bản, Thoát. Chưa kiểm tra toàn bộ chuỗi tiếng Việt trong tất cả màn hình hoặc một trận hoàn chỉnh.
 
-## Bản trial và điều khoản
+## Tối ưu hiệu năng và tải dữ liệu
 
-Bộ dữ liệu trial được trích xuất đầy đủ từ installer Age of Empires Trial được Boxedwine lưu trữ tại:
+- Gói game được nén sẵn dưới cấu trúc `userapp/`, để Boxedwine dùng trực tiếp; không giải nén rồi đóng gói lại thành ZIP 45 MB trong JavaScript.
+- Dung lượng gói game hiện khoảng **23,7 MB**, thay vì 25 MB bản đóng gói thử trước.
+- Wine font overlay khoảng **9,75 MB**, thay vì 12,3 MB trong bản nghiên cứu. Không bao gồm 105 font TCVN3 tải từ cộng đồng.
+- Wine root filesystem được tải **theo các yêu cầu HTTP Range**, không bắt buộc tải trọn 50 MB ngay từ đầu.
+- Các file ZIP nhị phân được phục vụ dưới đường dẫn đuôi `.css` với nội dung ZIP không đổi để tránh tiện ích IDM chặn phản hồi tải trong trình duyệt; **đây không phải mã CSS**.
+- Tệp tĩnh được phân phối qua GitHub Pages CDN, sử dụng bộ nhớ đệm HTTP mặc định của trình duyệt.
 
-https://www.boxedwine.org/wp-content/uploads/2018/02/MSAoE.exe
+## Giới hạn
 
-Gói `demo/aoe-trial-1997.dat` là ZIP lưu nguyên 129 tệp từ bản Trial đã được giải nén và sắp lại vào các thư mục DATA, SOUND, v.v. Nội dung tài nguyên, EXE và DLL **giữ nguyên**, bao gồm EULA. Mục đích sử dụng phi thương mại. `trial-eula.txt` là bản sao EULA đi kèm trong gói.
+- Đây là **Age of Empires 1 Trial 1997**, không phải Age of Empires: The Rise of Rome hay bản thương mại đầy đủ. Một số tính năng, nền văn minh, bản đồ và chế độ mạng sẽ bị giới hạn.
+- Độ phân giải game gốc là **800 × 600**. Trình duyệt phóng to pixel, không nâng cấp sprite/texture HD.
+- Âm thanh, hiệu năng, lưu game và các màn hình ngoài menu cần tiếp tục kiểm thử trên laptop thực tế.
+- Không phải bản phát hành được Microsoft, Ensemble Studios hoặc aoe.vn bảo trợ.
 
-Game thuộc Microsoft / Ensemble Studios. Dự án không được các đơn vị đó bảo trợ.
+## Nguồn và giấy phép
 
-## Thử bản tiếng Việt bằng file của bạn
+- Trình giả lập: [WindowsAppPlayer](https://github.com/bassdrum4/windowsappplayer), [Boxedwine](https://www.boxedwine.org/), Wine. Xem `NOTICE.md` và `LICENSE`.
+- Bản Trial được lấy từ [Boxedwine](https://www.boxedwine.org/wp-content/uploads/2018/02/MSAoE.exe), có EULA gốc tại `trial-eula.txt` và trong gói game. Phân phối phục vụ mục đích cá nhân/phi thương mại.
+- Dịch thuật: cộng đồng **aoe.vn**. Tên tác giả/nguồn được giữ trong tài liệu này.
+- Font được biến đổi từ Liberation Sans (OFL), có đổi tên thành **UmiVN** để tuân thủ điều kiện Reserved Font Name.
 
-Launcher truyền thống: https://tdumii.github.io/aoe-web-browser-vn/launcher.html?manual=1
+## Cách chạy local
 
-Nguồn Việt hóa cộng đồng: https://beyeucup.aoe.vn/cach-choi-aoe/huong-dan-tai-va-cai-dat-ban-aoe-viet-hoa-chuan-tieng-viet-5752.html
-
-Hiện các tệp `Language.dll` cộng đồng **không được phân phối qua repo**. Hạn chế TCVN3 trên Wine vẫn chưa giải quyết.
-
-## Kiểm thử và phát triển
-
-```sh
+```powershell
 npm run setup
 npm start
 ```
 
-Mở http://localhost:8097/play.html.
+Mở `http://localhost:8097/`. Để xem log kỹ thuật thêm `?debug=1` vào URL. Muốn chạy bộ game riêng, truy cập `/launcher.html?manual=1`.
 
-Source trình giả lập dựa trên [WindowsAppPlayer](https://github.com/bassdrum4/windowsappplayer) và [Boxedwine](https://www.boxedwine.org/). Giữ nguyên các tệp LICENSE và NOTICE.md của upstream. Hiện đã có chế độ tự chọn và tải bản Trial trong `app.js`. Runtime được tải từ upstream bởi `scripts/fetch-runtime.mjs`.
-
-Các tệp thử nghiệm cá nhân trong `local-game/` được giữ local, không commit vào repo.
+Nguồn tạo bản vá font: `scripts/build-vn-overlay.py`. Source được đẩy công khai, game được tải tự động từ website; không cần UmiBridge để chơi.

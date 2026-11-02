@@ -40,3 +40,18 @@ open-source projects:
 "Windows" is a trademark of Microsoft Corporation. This project is not
 affiliated with, endorsed by, or sponsored by Microsoft, WineHQ, CodeWeavers,
 or the Boxedwine project.
+
+## AOE 1997 Trial (Microsoft / Ensemble Studios)
+- Original noncommercial trial distribution obtained from https://www.boxedwine.org/wp-content/uploads/2018/02/MSAoE.exe
+- The EULA shipped with the trial is included as `trial-eula.txt` and in the browser bundle.
+- The game data in `demo/aoe-vn-trial.css` is a ZIP-format archive containing the trial's resource files and an adapted community language resource. This is not a full Rise of Rome copy.
+
+## Vietnamese translation (community aoe.vn)
+- Original Vietnamese translation resource: https://beyeucup.aoe.vn/cach-choi-aoe/huong-dan-tai-va-cai-dat-ban-aoe-viet-hoa-chuan-tieng-viet-5752.html
+- The adapted `Language.dll` uses the source's TCVN3 strings and points to the custom UmiVN font name for the emulated environment.
+- Attribution to aoe.vn for the translated strings. AOE VN Web is independently maintained.
+
+## UmiVN font mapping
+- `assets/vn-wine-overlay.css` is a ZIP-format Wine overlay. The two remapped fonts are derived from Liberation Sans, subject to the SIL Open Font License 1.1, with their family renamed to `UmiVN` to avoid the reserved font name `Liberation`.
+- The original SIL Open Font License and copyright notices are preserved inside the overlay ZIP.
+- Source for generating this font overlay from the upstream files is `scripts/build-vn-overlay.py`. No restricted TCVN3 font collections are included in this overlay.
