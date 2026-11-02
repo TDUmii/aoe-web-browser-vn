@@ -2,86 +2,36 @@
 <html lang="vi">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#101a14">
-<meta name="description" content="Mở Đế Chế 1 / Rise of Rome trên web. Trò chơi được phát trực tiếp từ Sky Farmer, không cần file EXE.">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#101b13">
+<meta name="description" content="Đường dẫn truy cập nhanh tới bản Đế Chế Age of Empires chạy trực tiếp trên trình duyệt tại Sky Farmer.">
+<meta http-equiv="refresh" content="2;url=https://aoe.skyvalley.me/">
 <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-<title>Chơi Đế Chế Online | AOE Web VN</title>
+<title>Vào chơi Đế Chế | AOE Web VN</title>
 <style>
-:root{color-scheme:dark;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;color:#f1edda;background:#080f0a}
+:root{font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif;color:#f1ead6;background:#101b13}
 *{box-sizing:border-box}
-html,body{margin:0;width:100%;height:100%;overflow:hidden}
-#game{display:block;position:absolute;inset:0;width:100%;height:100%;border:0;background:#121a10}
-#loading{position:absolute;inset:0;display:grid;place-items:center;background:radial-gradient(circle at 50% 32%,#223a2b,#0c150e 67%);z-index:2;transition:opacity .25s ease}
-.loadbox{width:min(460px,90vw);text-align:center;padding:32px;border:1px solid #ffffff20;border-radius:20px;background:#08120ec7;box-shadow:0 24px 68px #0009}
-.emblem{display:inline-grid;place-items:center;width:72px;height:72px;border:2px solid #d7b86b;border-radius:17px;color:#f8e9af;background:#3a3822;font:700 30px Georgia,serif}
-.loadbox h1{font:700 clamp(27px,5vw,39px) Georgia,serif;margin:18px 0 10px}
-.loadbox p{font-size:14px;line-height:1.65;color:#b8c0b1;margin:0 0 14px}
-.loader{margin:18px auto 20px;width:65px;height:4px;border-radius:12px;background:linear-gradient(90deg,transparent,#d2b86c,transparent);animation:travel 1.5s linear infinite}
-@keyframes travel{0%{transform:translateX(-30px);opacity:.3}50%{opacity:1}100%{transform:translateX(30px);opacity:.3}}
-#loading.hidden{opacity:0;pointer-events:none}
-#dock{position:absolute;top:12px;left:12px;z-index:5;display:flex;align-items:flex-start;gap:8px}
-.controls{display:flex;align-items:center;gap:7px;padding:6px;border:1px solid #e6cb8a57;border-radius:13px;background:#0e1b14e8;box-shadow:0 8px 32px #0009;backdrop-filter:blur(12px)}
-.brand{display:flex;align-items:center;gap:10px;margin:0 6px 0 3px;white-space:nowrap}
-.brand .icon{font:700 14px Georgia,serif;color:#e9d49a;border:1px solid #c4a65e88;padding:7px;border-radius:7px}
-.brand strong{display:block;font:700 13px Georgia,serif}
-.brand small{display:block;font-size:10px;color:#aab4a3;margin-top:3px}
-button,a.action{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:37px;border:1px solid #faf0c524;background:#ffffff0a;border-radius:8px;padding:0 11px;color:#f2ecda;font:600 12px inherit;cursor:pointer;text-decoration:none;transition:background .15s,border-color .15s}
-button:hover,a.action:hover{background:#dac07f24;border-color:#ead29588}
-button:focus-visible,a.action:focus-visible{outline:2px solid #ead295;outline-offset:3px}
-#panel{position:absolute;top:63px;left:0;width:min(345px,calc(100vw - 24px));padding:17px 18px;background:#0c1812f5;border:1px solid #e7d18c55;border-radius:15px;box-shadow:0 14px 48px #000a;backdrop-filter:blur(16px);font-size:13px;line-height:1.55}
-#panel[hidden]{display:none}
-#panel h2{font:700 20px Georgia,serif;margin:0 0 10px}
-#panel p{color:#b4c0b1;margin:7px 0}
-#panel .notice{color:#e4d4ab}
-#panel .links{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
-#panel .links a{flex:1}
-#help{position:absolute;right:12px;bottom:12px;z-index:4;padding:8px 11px;border:1px solid #fff3;border-radius:9px;color:#f1e6c4;font-size:11px;background:#07140dd6;max-width:360px}
-#help[hidden]{display:none}
-@media(max-width:650px){#dock{top:8px;left:8px}.controls{gap:4px;padding:5px}.brand small{display:none}.brand strong{font-size:11px}.brand{margin-right:3px;gap:6px}button,a.action{min-height:36px;padding:0 9px;font-size:11px}#dock .desktop-label{display:none}#help{max-width:230px;font-size:10px}}
-@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+html,body{height:100%;margin:0}
+body{display:grid;place-items:center;padding:22px;background:radial-gradient(circle at center,#283927,#101b13 65%)}
+main{width:min(460px,100%);padding:34px 30px;text-align:center;border-radius:20px;border:1px solid #ceb36c66;background:#0a140ecc;box-shadow:0 20px 60px #0008}
+.logo{display:inline-grid;place-items:center;font:700 29px Georgia,serif;border:2px solid #d4b76b;color:#efda9b;border-radius:15px;width:65px;height:65px}
+h1{font:700 30px/1.2 Georgia,serif;margin:18px 0 12px}
+p{color:#b9c3b4;font-size:14px}
+a.play{display:block;padding:13px 22px;color:#1d2418;text-decoration:none;background:#e5c97a;border-radius:10px;font-weight:750;margin:22px 0 13px}
+a.play:hover{background:#f0d898}
+a.other{color:#b7c6ad;font-size:12px}
+small{display:block;color:#8c9a8e;font-size:12px;margin-top:22px}
 </style>
+<script>window.location.replace("https://aoe.skyvalley.me/");</script>
 </head>
 <body>
-<iframe id="game" title="Age of Empires 1 - Rise of Rome trên Sky Farmer" src="https://aoe.skyvalley.me/" allow="autoplay; fullscreen; gamepad" allowfullscreen referrerpolicy="no-referrer"></iframe>
-<div id="loading" role="status" aria-live="polite">
-  <div class="loadbox">
-    <span class="emblem">ĐC</span>
-    <h1>Đế Chế Web VN</h1>
-    <p>Đang mở Age of Empires 1 / Rise of Rome từ Sky Farmer. Không cần chọn EXE hay tải game lên trang này.</p>
-    <div class="loader" aria-hidden="true"></div>
-    <a class="action" href="https://aoe.skyvalley.me/" target="_blank" rel="noopener noreferrer">Mở game trực tiếp tại Sky Farmer</a>
-  </div>
-</div>
-<div id="dock">
-  <div class="controls">
-    <div class="brand"><span class="icon">ĐC</span><div><strong>ĐẾ CHẾ WEB VN</strong><small>Chơi nhanh · Game từ Sky Farmer</small></div></div>
-    <button type="button" id="menu" aria-expanded="false" aria-controls="panel">☰ <span class="desktop-label">Tùy chọn</span></button>
-    <button type="button" id="full" aria-label="Bật toàn màn hình" title="Toàn màn hình">⛶</button>
-  </div>
-  <section id="panel" hidden aria-label="Tùy chọn trò chơi">
-    <h2>Age of Empires Online</h2>
-    <p>Đây là bản AOE được <b>nhúng từ Sky Farmer</b>, không phải mã nguồn game lưu trong GitHub của bạn.</p>
-    <p class="notice">Giao diện trang này bằng tiếng Việt; ngôn ngữ trong game phụ thuộc phiên bản Sky Farmer. Độ nét và gameplay cũng do máy chủ game quyết định.</p>
-    <p>Nhấp vào màn hình để điều khiển. Nếu game không xuất hiện hoặc nhập chuột/bàn phím bị lỗi, hãy mở trực tiếp trang gốc.</p>
-    <div class="links">
-      <a class="action" href="https://aoe.skyvalley.me/" target="_blank" rel="noopener noreferrer">Mở game gốc ↗</a>
-      <a class="action" href="./launcher.html">Chạy bằng file riêng</a>
-    </div>
-  </section>
-</div>
-<div id="help">Game đang chạy từ bên thứ ba · Bấm ☰ để mở trang gốc khi cần</div>
-<script>
-const game=document.getElementById('game');
-const loading=document.getElementById('loading');
-const panel=document.getElementById('panel');
-const menu=document.getElementById('menu');
-const help=document.getElementById('help');
-game.addEventListener('load',()=>{loading.classList.add('hidden');help.hidden=false;});
-game.addEventListener('error',()=>{loading.querySelector('p').textContent='Không mở được máy chủ game. Hãy dùng nút mở game trực tiếp bên dưới.';});
-menu.addEventListener('click',()=>{panel.hidden=!panel.hidden;menu.setAttribute('aria-expanded',String(!panel.hidden));});
-document.getElementById('full').addEventListener('click',async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();}catch(err){console.warn('Không thể bật toàn màn hình',err);}});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!panel.hidden){panel.hidden=true;menu.setAttribute('aria-expanded','false');}});
-</script>
+<main>
+<div class="logo">ĐC</div>
+<h1>Đế Chế Web VN</h1>
+<p>Đang chuyển bạn đến bản Age of Empires chơi trên web tại <strong>Sky Farmer</strong>, không cần tải game hoặc chọn file EXE.</p>
+<a class="play" href="https://aoe.skyvalley.me/">Vào chơi Đế Chế ngay</a>
+<a class="other" href="./launcher.html">Dùng bộ giả lập và file game của riêng bạn</a>
+<small>Trò chơi được vận hành bởi Sky Farmer, không phải dự án do chúng tôi lưu trữ hoặc Việt hóa bên trong.</small>
+</main>
 </body>
 </html>
