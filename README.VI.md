@@ -25,7 +25,7 @@ Game thuộc Microsoft / Ensemble Studios. Dự án không được các đơn v
 
 ## Thử bản tiếng Việt bằng file của bạn
 
-Launcher truyền thống: https://tdumii.github.io/aoe-web-browser-vn/launcher.html
+Launcher truyền thống: https://tdumii.github.io/aoe-web-browser-vn/launcher.html?manual=1
 
 Nguồn Việt hóa cộng đồng: https://beyeucup.aoe.vn/cach-choi-aoe/huong-dan-tai-va-cai-dat-ban-aoe-viet-hoa-chuan-tieng-viet-5752.html
 
