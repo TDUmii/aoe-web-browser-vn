@@ -12,7 +12,7 @@
 html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#000}
 body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
 #screen-container{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#000}
-#canvas{display:block;width:min(100vw,133.333333vh);height:min(100vh,75vw);max-width:100%;max-height:100%;object-fit:fill;image-rendering:pixelated;outline:none}
+#canvas{display:block;width:min(800px,100vw,133.333333vh);height:auto;aspect-ratio:4/3;max-width:100%;max-height:100%;object-fit:contain;image-rendering:auto;outline:none}
 #frame-wrap,#appFrame{display:none!important}
 #overlay{position:fixed;inset:0;z-index:5;background:#000;display:grid;place-items:center;transition:opacity .4s}
 #overlay.is-hidden{opacity:0;pointer-events:none;visibility:hidden}
@@ -21,7 +21,12 @@ body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
 #loading p{font:13px/1.7 system-ui,sans-serif;white-space:normal;color:#c1bdaf;margin:16px 0 12px}
 #bootStatus{font:12px/1.5 system-ui,sans-serif;color:#9b9e95;margin-top:11px}
 #bootProgress{display:block;width:100%;height:3px;accent-color:#cdb16e}
-#retryGame{background:#d1b67b;border:0;border-radius:7px;padding:9px 15px;color:#15140e;font-weight:700;cursor:pointer}
+#retryGame{background:#d1b67b;border:0;border-radius:7px;padding:9px 15px;color:#15140e;font-weight:700;cursor:pointer;margin-top:16px}
+#recovery{position:fixed;bottom:12px;right:12px;z-index:4;display:none;gap:8px;align-items:center;border:1px solid #f1d79755;border-radius:9px;background:#151611ed;color:#faf0d6;padding:8px 10px;font:600 12px system-ui;opacity:.25;cursor:pointer;transition:opacity .2s}
+#recovery:hover,#recovery:focus-visible{opacity:1}
+body.started #recovery{display:flex}
+#recovery:focus-visible{outline:2px solid #e6c179}
+#info{font-size:11px;color:#aab6a6;margin-top:8px;line-height:1.5}
 [hidden],.hidden-controls{display:none!important}
 #debug{display:none;position:fixed;bottom:0;left:0;right:0;max-height:35vh;overflow:auto;padding:10px;background:#121212ed;color:#aee2ad;z-index:6;white-space:pre-wrap;font:11px Consolas,monospace}
 body.debug #debug{display:block}
@@ -39,7 +44,8 @@ body.debug #debug{display:block}
     <p id="welcomeMessage">Đang mở game...</p>
     <progress id="bootProgress" max="100" value="1"></progress>
     <div id="bootStatus">Đang chuẩn bị...</div>
-    <button id="retryGame" type="button" hidden>Thử lại</button>
+    <button id="retryGame" type="button" hidden>Khởi động lại game</button>
+    <div id="info" hidden>Nếu không lên hình, hãy thử cửa sổ ẩn danh hoặc tắt IDM trên trang này.</div>
   </div>
 </div>
 <div class="hidden-controls" aria-hidden="true">
@@ -51,26 +57,74 @@ body.debug #debug{display:block}
   <button id="saveStateBtn"></button><button id="stopBtn"></button>
   <input type="radio" id="arch32" checked><input type="radio" id="arch64">
 </div>
+<button id="recovery" type="button" aria-label="Khởi động lại khi màn hình đen" title="Màn hình đen? Bấm để tải lại game">↻ Tải lại</button>
 <div id="debug"><div id="logOutput"></div></div>
 <script src="./app.js"></script>
 <script>
-document.getElementById("retryGame").addEventListener("click",()=>location.reload());
-if(new URLSearchParams(location.search).has("debug"))document.body.classList.add("debug");
-const overlay=document.getElementById("overlay");
-const status=document.getElementById("bootStatus");
-let hidden=false;
-const observer=new MutationObserver(()=>{
- const s=status.textContent||"";
- if(!hidden&&/Running|Launching|Starting/.test(s)){
-   hidden=true;
-   setTimeout(()=>{overlay.classList.add("is-hidden");document.getElementById("canvas").focus()},6500);
- }
- if(/Không thể|Error|failed/i.test(s)){
-   hidden=false;
-   overlay.classList.remove("is-hidden");
- }
+// Keep the launch screen visible while Wine is still painting its first frames.
+// "Running..." signals that the CPU emulator started, NOT that the game menu is ready.
+const overlay = document.getElementById("overlay");
+const status = document.getElementById("bootStatus");
+const canvas = document.getElementById("canvas");
+const retry = document.getElementById("retryGame");
+const recovery = document.getElementById("recovery");
+const welcome = document.getElementById("welcomeMessage");
+const info = document.getElementById("info");
+const debug = new URLSearchParams(location.search).has("debug");
+if (debug) document.body.classList.add("debug");
+
+function reloadGame() { window.location.reload(); }
+retry.addEventListener("click", reloadGame);
+recovery.addEventListener("click", reloadGame);
+
+let bootStarted = false;
+let bootReady = false;
+let failed = false;
+function showFailure(message) {
+  if (failed) return;
+  failed = true;
+  overlay.classList.remove("is-hidden");
+  welcome.textContent = message;
+  status.textContent = "Có thể thử tải lại hoặc mở cửa sổ ẩn danh để tránh lỗi tiện ích mở rộng.";
+  document.getElementById("bootProgress").hidden = true;
+  retry.hidden = false;
+  info.hidden = false;
+  document.body.classList.remove("started");
+}
+function onStatus() {
+  if (failed) return;
+  const s = status.textContent || "";
+  if (/Không thể|Exception thrown|(?:^|\s)(?:failed|error)(?:\s|$)/i.test(s)) {
+    showFailure("Không khởi chạy được Đế Chế trên trình duyệt này.");
+    return;
+  }
+  if (!bootStarted && /Running/i.test(s)) {
+    bootStarted = true;
+    welcome.textContent = "Game đang dựng hình và nạp menu...";
+    // The first splash/black frame can persist 15-25s on slower laptops.
+    // Do not remove loading UI just because the emulator reports Running.
+    setTimeout(() => {
+      if (failed) return;
+      bootReady = true;
+      overlay.classList.add("is-hidden");
+      document.body.classList.add("started");
+      canvas.focus({ preventScroll: true });
+    }, 22000);
+  }
+}
+new MutationObserver(onStatus).observe(status,{childList:true,subtree:true,characterData:true});
+onStatus();
+// A watchdog avoids an infinite opaque black page if the emulator fails to start.
+setTimeout(() => {
+  if (!bootStarted && !failed) showFailure("AOE chưa khởi động được. Kiểm tra mạng hoặc WebGL của trình duyệt.");
+}, 65000);
+canvas.addEventListener("webglcontextlost", e => {
+  e.preventDefault();
+  showFailure("Trình duyệt bị mất kết nối với bộ xử lý đồ họa (WebGL).");
 });
-observer.observe(status,{childList:true,subtree:true,characterData:true});
+window.addEventListener("unhandledrejection", e => {
+  if (!bootReady && !failed) showFailure("Bộ giả lập gặp lỗi khi tải hoặc khởi chạy game.");
+});
 </script>
 </body>
 </html>

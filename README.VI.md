@@ -44,3 +44,11 @@ npm start
 Mở `http://localhost:8097/`. Để xem log kỹ thuật thêm `?debug=1` vào URL. Muốn chạy bộ game riêng, truy cập `/launcher.html?manual=1`.
 
 Nguồn tạo bản vá font: `scripts/build-vn-overlay.py`. Source được đẩy công khai, game được tải tự động từ website; không cần UmiBridge để chơi.
+
+## Khắc phục màn hình đen và nét chữ (02/11/2026)
+
+- Trước đây, trang ẩn lớp tải ngay sau khi bộ giả lập báo **Running**, dù AOE còn đang giải mã hình ảnh và nạp menu. Giờ trạng thái tải tiếp tục hiển thị trong giai đoạn mở game; không để người chơi nhìn màn hình đen không giải thích.
+- Nếu runtime không khởi động hoặc mất WebGL context, website hiển thị cảnh báo và nút **Khởi động lại**. Khi chơi có nút **↻ Tải lại** rất nhỏ ở góc dưới phải để cứu phiên đen màn hình.
+- Gói game được kiểm tra dung lượng và chữ ký ZIP trước khi chạy để tránh giả lập khởi động trên tệp tải lỗi.
+- Màn hình AOE được hiển thị ở kích thước gốc tối đa 800×600 (không phóng to răng cưa) và dùng bộ lọc làm mịn của trình duyệt. Đây là cải thiện hiển thị; **font gốc bên trong AOE 1997 vẫn bị giới hạn bởi engine và dữ liệu 800×600**.
+- Game đã được kiểm thử vào menu và màn hình chọn chiến dịch, chưa khẳng định tất cả tình trạng treo/mất hình trên mọi laptop đã được xử lý.

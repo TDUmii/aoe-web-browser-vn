@@ -899,10 +899,16 @@ async function launchBundledTrial() {
     // Parallelize runtime startup and the compact pre-packaged game download.
     // Let the browser's HTTP cache handle re-use; avoid a half-written CacheStorage entry.
     const gamePromise = fetch(SITE_BASE + "demo/aoe-vn-trial.css?v=vn4")
-      .then(response => {
+      .then(async response => {
         if (!response.ok) throw new Error("HTTP " + response.status + " downloading AOE VN");
-        return response.blob();
-      });    await loadBoxedwineDeps();
+        const data = await response.blob();
+        if (data.size < 20_000_000) throw new Error("Tệp AOE tải thiếu dữ liệu (" + data.size + " bytes)");
+        const magic = new Uint8Array(await data.slice(0, 4).arrayBuffer());
+        if (magic[0] !== 0x50 || magic[1] !== 0x4b)
+          throw new Error("Tệp dữ liệu game không phải ZIP hợp lệ");
+        return data;
+      });
+    await loadBoxedwineDeps();
     state.appZipBlob = await gamePromise; // Already rooted as userapp/ and compressed on the server.
     state.pickedExe = {
       name: "EMPIRES.EXE", originalName: "EMPIRES.EXE", path: "EMPIRES.EXE",
