@@ -958,8 +958,7 @@ async function launchBundledTrial() {
   }
 }
 
-// Full game packages stay on the player's machine. Both local automatic launch
-// and the public file picker use the same archive, including its Wine fonts.
+// Hosted packages and local files share the same archive validation and boot path.
 async function launchFullArchive(blob) {
   if (state.bootInFlight || state.booted) return;
   if (blob.size > 300 * 1024 * 1024) throw new Error("Gói game vượt giới hạn 300 MB.");
@@ -997,6 +996,47 @@ async function launchFullArchive(blob) {
   await bootAndRun();
 }
 
+async function downloadFullArchive(config) {
+  const limit = 300 * 1024 * 1024;
+  const parts = config.gameParts || [{ url: config.game }];
+  if (!Array.isArray(parts) || !parts.length || parts.length > 32) {
+    throw new Error("Cấu hình dữ liệu game trên website không hợp lệ.");
+  }
+  const urls = parts.map(part => {
+    if (!part || typeof part.url !== "string" || !part.url ||
+        (part.size !== undefined && (!Number.isSafeInteger(part.size) || part.size <= 0))) {
+      throw new Error("Cấu hình tệp game trên website không hợp lệ.");
+    }
+    const url = new URL(part.url, location.href);
+    if (!/^https?:$/.test(url.protocol)) throw new Error("Địa chỉ dữ liệu game không hợp lệ.");
+    return url;
+  });
+  const declared = parts.reduce((sum, part) => sum + (part.size || 0), 0);
+  if (declared > limit) throw new Error("Gói game vượt giới hạn 300 MB.");
+  const blobs = [];
+  let loaded = 0;
+  els.bootProgress.hidden = false;
+  els.bootProgress.max = 100;
+  els.bootProgress.value = 0;
+  for (let index = 0; index < parts.length; index++) {
+    setStatus(`Đang nạp dữ liệu game từ website: phần ${index + 1}/${parts.length} (${formatBytes(loaded)} đã nạp)...`);
+    const response = await fetch(urls[index]);
+    if (!response.ok) throw new Error(`Không tải được dữ liệu game (HTTP ${response.status}). Hãy thử tải lại trang.`);
+    if (Number(response.headers.get("content-length")) > limit - loaded) {
+      throw new Error("Gói game vượt giới hạn 300 MB.");
+    }
+    const blob = await response.blob();
+    loaded += blob.size;
+    if (loaded > limit) throw new Error("Gói game vượt giới hạn 300 MB.");
+    if (!blob.size || (parts[index].size !== undefined && blob.size !== parts[index].size)) {
+      throw new Error("Dữ liệu game tải chưa đủ. Hãy thử tải lại trang.");
+    }
+    blobs.push(blob);
+    els.bootProgress.value = Math.round((index + 1) / parts.length * 100);
+  }
+  return new Blob(blobs, { type: "application/zip" });
+}
+
 async function launchFullGame() {
   const chooser = document.getElementById("chooseGame");
   const intro = document.getElementById("welcomeMessage");
@@ -1023,12 +1063,13 @@ async function launchFullGame() {
       showChoice("Chọn gói Đế Chế đầy đủ trên máy để bắt đầu. Không tự mở bản Trial.");
       return;
     }
-    if (window.AoEPlayer) window.AoEPlayer.begin();
-    setStatus("Đang tải bản Đế Chế đầy đủ trên máy...");
-    const game = await fetch(new URL(config.game, location.href));
-    if (!game.ok) throw new Error("Không tải được bộ game đầy đủ trên máy.");
-    await launchFullArchive(await game.blob());
-  } catch (error) { showChoice(error.message); }
+    // Network transfers can take longer than Wine's boot watchdog.
+    if (window.AoEPlayer) window.AoEPlayer.idle();
+    await launchFullArchive(await downloadFullArchive(config));
+  } catch (error) {
+    if (window.AoEPlayer) window.AoEPlayer.fail(error.message);
+    else showChoice(error.message);
+  }
 }
 
 // After an exe is staged, sniff its PE header: on 64-bit mode a 32-bit-only

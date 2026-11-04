@@ -1,6 +1,8 @@
 # Đế Chế Web VN
 
-**Vào thẳng game:** https://tdumii.github.io/aoe-web-browser-vn/
+**Website:** https://tdumii.github.io/aoe-web-browser-vn/
+
+**Website hiện chưa kèm bản đầy đủ để mở link và chơi ngay.** Nó vẫn yêu cầu gói game trên máy. Loader đã hỗ trợ nạp tự động dữ liệu từ hosting, nhưng cần nguồn dữ liệu được phép phân phối công khai; xem [README chính](README.md#nạp-tự-động-từ-website).
 
 **Bản hiện tại dùng Rise of Rome đầy đủ** với gói game/CD trên máy. Mở bằng `choi-aoe.cmd` hoặc đọc [README chính](README.md). Các mục Trial dưới đây ghi lại bản cũ; phần cập nhật đầy đủ nằm cuối tài liệu.
 

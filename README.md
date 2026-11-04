@@ -2,11 +2,31 @@
 
 Chơi **Age of Empires: The Rise of Rome đầy đủ** bằng trình duyệt, có giao diện tiếng Việt. Dùng Boxedwine + Wine + WebAssembly, bộ game được đọc ngay trên máy của bạn.
 
+**Trạng thái website công khai:** hiện vẫn yêu cầu chọn gói game của người chơi. Chưa đáp ứng trải nghiệm mở đường link và chơi ngay bản đầy đủ. Bộ mã nguồn có thể tự nạp dữ liệu từ website, nhưng repository chưa kèm dữ liệu thương mại của Rise of Rome để phát hành công khai.
+
 ## Mở chơi
 
 Trên máy đã chuẩn bị bộ game, chạy `choi-aoe.cmd` hoặc `npm start`, sau đó mở **http://localhost:8097/**. Máy chủ tự dùng gói tại `local-game/aoe-standard-web/aoe-full.zip`.
 
 Trên website GitHub Pages, bấm **Chọn gói game đầy đủ (.zip)** và chọn `aoe-full.zip` đã chuẩn bị. Bộ game không được gửi lên máy chủ. Website không tự mở bản Trial.
+
+## Nạp tự động từ website
+
+Khi có bộ dữ liệu được phép lưu trữ và phân phối trên website, đặt `edition` thành `full` trong `game-config.json` và dùng `game` trỏ tới ZIP đã đóng gói. Trình duyệt tự nạp rồi khởi động, không yêu cầu người chơi tải tệp thủ công, chọn ZIP hoặc chạy máy chủ trên máy.
+
+Với hosting giới hạn kích thước từng tệp, có thể chia ZIP thành các phần nhị phân liên tiếp, đặt trong `assets/` và cấu hình `gameParts` theo đúng thứ tự:
+
+```json
+{
+  "edition": "full",
+  "gameParts": [
+    { "url": "assets/game/package-01.part", "size": 47185920 },
+    { "url": "assets/game/package-02.part", "size": 34033018 }
+  ]
+}
+```
+
+Đây là cấu trúc minh họa, không phải các tệp game đã có trên website. `size` là số byte chính xác của từng phần. URL tương đối giữ đúng đường dẫn GitHub Pages. Loader kiểm tra kích thước, hiển thị phần đang nạp và chỉ bắt đầu giới hạn chờ khởi động Wine sau khi nạp xong dữ liệu. Tổng ZIP tối đa 300 MiB. Nguồn runtime GPL/LGPL không cấp quyền phân phối dữ liệu game thương mại; xem [NOTICE.md](NOTICE.md).
 
 Dùng Chrome hoặc Edge trên máy tính, có chuột và bàn phím. Trong game chọn **Chơi đơn → Bản đồ ngẫu nhiên**, chọn số máy rồi bấm **Bắt đầu**. Nên thử 2 người chơi trước trên máy yếu.
 
