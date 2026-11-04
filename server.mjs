@@ -9,6 +9,7 @@ import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { exec } from "node:child_process";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = __dirname;
@@ -121,6 +122,9 @@ server.on("error", (err) => {
 });
 
 server.listen(PORT, "127.0.0.1", () => {
+  if (process.platform === "win32" && process.argv.includes("--open")) {
+    exec(`start "" "http://127.0.0.1:${PORT}/"`, { windowsHide: true });
+  }
   console.log(`WindowsAppPlayer running at http://localhost:${PORT}`);
   console.log(`Drop a .exe on the page to run it — no VM, no upload, everything stays on this machine.`);
 });
