@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#000000">
-<meta name="description" content="Chơi chiến dịch AoE 1997 Trial trên trình duyệt với menu tiếng Việt. Dành cho máy tính có chuột và bàn phím.">
-<title>Đế Chế Web VN - AoE 1997 Trial</title>
+<meta name="description" content="Chơi Đế Chế - Rise of Rome đầy đủ với tiếng Việt trong trình duyệt. Dành cho máy tính có chuột và bàn phím.">
+<title>Đế Chế Web VN - Rise of Rome</title>
 <link rel="icon" href="./favicon.svg" type="image/svg+xml">
 <style>
 :root{color-scheme:dark}
@@ -13,7 +13,7 @@
 html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#000}
 body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
 #screen-container{position:absolute;inset:0 0 68px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#000}
-#canvas{display:block;width:min(800px,100vw,calc((100dvh - 68px) * 4 / 3));height:auto;aspect-ratio:4/3;max-width:100%;max-height:100%;object-fit:contain;image-rendering:auto;outline:none}
+#canvas{display:block;width:min(100vw,calc((100dvh - 68px) * 4 / 3));height:auto;aspect-ratio:4/3;max-width:100%;max-height:100%;object-fit:contain;image-rendering:auto;outline:none}
 #frame-wrap,#appFrame{display:none!important}
 #overlay{position:fixed;inset:0;z-index:5;background:#000;display:grid;place-items:center;transition:opacity .4s}
 #overlay.is-hidden{opacity:0;pointer-events:none;visibility:hidden}
@@ -22,6 +22,7 @@ body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
 #loading p{font:14px/1.7 system-ui,sans-serif;white-space:normal;color:#c1bdaf;margin:16px 0 12px}
 #bootStatus{font:14px/1.5 system-ui,sans-serif;color:#9b9e95;margin-top:11px}
 #bootProgress{display:block;width:100%;height:3px;accent-color:#cdb16e}
+#chooseFullZip{min-height:44px;margin-top:16px;padding:12px 16px;background:#d1b67b;color:#15140e;border:0;border-radius:6px;font:700 16px system-ui;cursor:pointer}
 #retryGame{background:#d1b67b;border:0;border-radius:7px;padding:9px 15px;color:#15140e;font-weight:700;cursor:pointer;margin-top:16px}
 #playerTools{position:fixed;bottom:0;left:0;right:0;z-index:7;min-height:60px;padding:8px 16px;display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;background:#10100f;border-top:1px solid #393227}
 #playerTools button,dialog button{min-height:44px;border:1px solid #776647;background:#201e18;color:#f3e3c4;border-radius:6px;padding:8px 12px;font:600 14px system-ui;cursor:pointer}
@@ -37,7 +38,7 @@ dialog h1{font:700 26px Georgia,serif;margin:0 0 16px;color:#e6c486}
 dialog p{margin:12px 0}
 dialog li{margin:8px 0}
 dialog form{text-align:right;margin-top:20px}
-@media(max-width:600px){#screen-container{bottom:112px}#canvas{width:min(800px,100vw,calc((100dvh - 112px) * 4 / 3))}#playerTools{padding:8px;gap:6px}#playerTools button{font-size:13px;padding:8px 10px}#saveMessage{bottom:112px}}
+@media(max-width:600px){#screen-container{bottom:112px}#canvas{width:min(100vw,calc((100dvh - 112px) * 4 / 3))}#playerTools{padding:8px;gap:6px}#playerTools button{font-size:13px;padding:8px 10px}#saveMessage{bottom:112px}}
 #info{font-size:14px;color:#aab6a6;margin-top:8px;line-height:1.5}
 [hidden],.hidden-controls{display:none!important}
 #debug{display:none;position:fixed;bottom:0;left:0;right:0;max-height:35vh;overflow:auto;padding:10px;background:#121212ed;color:#aee2ad;z-index:6;white-space:pre-wrap;font:11px Consolas,monospace}
@@ -45,7 +46,7 @@ body.debug #debug{display:block}
 @media(prefers-reduced-motion:reduce){#overlay{transition:none}}
 </style>
 </head>
-<body data-aoe-auto="trial">
+<body data-aoe-auto="full">
 <div id="screen-container">
   <canvas id="canvas" tabindex="0" aria-label="Age of Empires Việt hóa" title="Nhấn để điều khiển"></canvas>
   <div id="frame-wrap"><iframe id="appFrame" title="Bộ giả lập"></iframe></div>
@@ -53,11 +54,16 @@ body.debug #debug{display:block}
 <div id="overlay" role="status" aria-live="polite">
   <div id="loading">
     <div class="mark">ĐẾ CHẾ</div>
-    <p id="welcomeMessage">Đang mở bản chơi thử AoE 1997...</p>
+    <p id="welcomeMessage">Đang chuẩn bị Đế Chế - Rise of Rome...</p>
     <progress id="bootProgress" max="100" value="1"></progress>
     <div id="bootStatus">Đang chuẩn bị...</div>
     <button id="retryGame" type="button" hidden>Khởi động lại game</button>
-    <div id="info">Dành cho máy tính có chuột và bàn phím. Vào Chơi đơn → Chiến dịch để bắt đầu.</div>
+    <div id="chooseGame" hidden>
+      <button id="chooseFullZip" type="button">Chọn gói game đầy đủ (.zip)</button>
+      <input id="fullGameZip" type="file" accept=".zip,application/zip" hidden>
+      <p>Bộ game đã chuẩn bị trên máy có tên <strong>aoe-full.zip</strong>. Tệp được đọc ngay trong trình duyệt của bạn.</p>
+    </div>
+    <div id="info">Dành cho máy tính có chuột và bàn phím. Vào Chơi đơn → Bản đồ ngẫu nhiên để chơi với máy.</div>
   </div>
 </div>
 <div class="hidden-controls" aria-hidden="true">
@@ -69,7 +75,7 @@ body.debug #debug{display:block}
   <button id="saveStateBtn"></button><button id="stopBtn"></button>
   <input type="radio" id="arch32" checked><input type="radio" id="arch64">
 </div>
-<p id="edition">AoE 1997 · Bản chơi thử · Menu tiếng Việt</p>
+<p id="edition">Đế Chế · Rise of Rome · Tiếng Việt</p>
 <nav id="playerTools" aria-label="Điều khiển trình chơi">
   <button id="fullscreenGame" type="button">Toàn màn hình</button>
   <button id="exportSaves" type="button" disabled>Xuất bản lưu</button>
@@ -81,9 +87,9 @@ body.debug #debug{display:block}
 <p id="saveMessage" role="status" aria-live="polite"></p>
 <dialog id="gameHelp" aria-labelledby="helpTitle">
   <h1 id="helpTitle">Chơi Đế Chế trong trình duyệt</h1>
-  <p>Đây là <strong>AoE 1997 Trial</strong>, có menu tiếng Việt. Một số nội dung hướng dẫn trong game vẫn bằng tiếng Anh. Bản này không phải Rise of Rome đầy đủ.</p>
+  <p>Trình chơi dùng <strong>Age of Empires: The Rise of Rome đầy đủ</strong> cùng bộ Việt hóa. Bộ game và font được đọc từ máy của bạn.</p>
   <ol>
-    <li>Chọn <strong>Chơi đơn → Chiến dịch</strong>, chọn bài rồi bấm bắt đầu. Trong bản Trial, Bản đồ ngẫu nhiên và một số mục khác chỉ mở trang giới thiệu.</li>
+    <li>Chọn <strong>Chơi đơn → Bản đồ ngẫu nhiên</strong> để tạo trận với máy, hoặc <strong>Chiến dịch</strong> để chơi nhiệm vụ. Nhập tên người chơi nếu được hỏi.</li>
     <li>Nhấp chuột trái để chọn quân, chuột phải để di chuyển hoặc giao việc. Kéo chuột trái để chọn nhiều quân. Đưa chuột tới mép bản đồ để cuộn. Bấm Menu ở góc trên phải để mở các lệnh trong trận.</li>
     <li>Muốn chơi tiếp lần sau: <strong>lưu ván trong menu game trước</strong>, sau đó bấm <strong>Xuất bản lưu</strong> để tải tệp ZIP về máy.</li>
     <li>Lần sau, bấm <strong>Nhập bản lưu</strong> ở menu chính, chọn ZIP đã xuất rồi vào <strong>Chơi đơn → Tải ván chơi</strong>. Tải lại hoặc đóng trang sẽ xóa dữ liệu chưa xuất.</li>
@@ -92,8 +98,8 @@ body.debug #debug{display:block}
   <form method="dialog"><button>Quay lại game</button></form>
 </dialog>
 <div id="debug"><div id="logOutput"></div></div>
-<script src="./player.js?v=20261104a"></script>
-<script src="./trial-saves.js?v=20261104a"></script>
-<script src="./app.js?v=20261104a"></script>
+<script src="./player.js?v=20261104full1"></script>
+<script src="./trial-saves.js?v=20261104full1"></script>
+<script src="./app.js?v=20261104full1"></script>
 </body>
 </html>

@@ -41,6 +41,12 @@ const server = http.createServer((req, res) => {
     // A fresh checkout must not require a second 50 MB copy to start locally.
     if (urlPath === "/fs/fullWine1.7.55-v8.asset") urlPath = "/fs/fullWine1.7.55-v8.zip";
     if (urlPath === "/fs/wine1.7.55-v8-min-online.asset") urlPath = "/fs/wine1.7.55-v8-min-online.zip";
+    // Optional full-game package is local, excluded from Git and the static site.
+    if (urlPath === "/game-config.json" && fs.existsSync(path.join(ROOT, "local-game/aoe-standard-web/game-config.json"))) {
+      urlPath = "/local-game/aoe-standard-web/game-config.json";
+    }
+    if (urlPath === "/game/aoe-full.css") urlPath = "/local-game/aoe-standard-web/aoe-full.zip";
+    if (urlPath === "/game/vn-fonts.css") urlPath = "/local-game/vn-native-fonts.css";
 
     // Contain every lookup inside the project directory.
     const filePath = path.normalize(path.join(ROOT, urlPath));
@@ -114,7 +120,7 @@ server.on("error", (err) => {
   throw err;
 });
 
-server.listen(PORT, () => {
+server.listen(PORT, "127.0.0.1", () => {
   console.log(`WindowsAppPlayer running at http://localhost:${PORT}`);
   console.log(`Drop a .exe on the page to run it — no VM, no upload, everything stays on this machine.`);
 });

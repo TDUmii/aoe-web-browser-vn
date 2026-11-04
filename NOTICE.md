@@ -55,3 +55,8 @@ or the Boxedwine project.
 - `assets/vn-wine-overlay.css` is a ZIP-format Wine overlay. The two remapped fonts are derived from Liberation Sans, subject to the SIL Open Font License 1.1, with their family renamed to `UmiVN` to avoid the reserved font name `Liberation`.
 - The original SIL Open Font License and copyright notices are preserved inside the overlay ZIP.
 - Source for generating this font overlay from the upstream files is `scripts/build-vn-overlay.py`. No restricted TCVN3 font collections are included in this overlay.
+
+## Optional local Rise of Rome package
+- Full game and CD media are supplied locally and excluded from Git and static-site builds. Runtime GPL/LGPL licenses do not license the commercial game content.
+- Local preparation preserves the source game executable bytes and changes only the translation DLL font-name resources to use the OFL UmiVN font already documented above.
+- The Wine overlay uses the supplied CD media through a normal folder/CD-drive mapping and ordinary installation registry paths. No host Windows registry or font installation is performed.

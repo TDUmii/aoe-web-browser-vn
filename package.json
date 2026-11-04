@@ -7,6 +7,6 @@
   "scripts": {
     "setup": "node scripts/fetch-runtime.mjs",
     "start": "node server.mjs",
-    "test": "node tests/player.test.mjs && node tests/trial-saves.test.mjs"
+    "test": "node tests/player.test.mjs && node tests/trial-saves.test.mjs && node tests/full-package.test.mjs"
   }
 }

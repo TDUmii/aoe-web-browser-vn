@@ -2,7 +2,7 @@
 
 **Vào thẳng game:** https://tdumii.github.io/aoe-web-browser-vn/
 
-AOE 1997 **Trial** được chạy trong trình duyệt bằng Boxedwine + Wine + WebAssembly. Trang mở trực tiếp canvas game, không có cột nút hoặc yêu cầu chọn EXE/ZIP.
+**Bản hiện tại dùng Rise of Rome đầy đủ** với gói game/CD trên máy. Mở bằng `choi-aoe.cmd` hoặc đọc [README chính](README.md). Các mục Trial dưới đây ghi lại bản cũ; phần cập nhật đầy đủ nằm cuối tài liệu.
 
 ## Việt hóa trong game
 
@@ -64,3 +64,14 @@ Nguồn tạo bản vá font: `scripts/build-vn-overlay.py`. Source được đ�
 Kiểm tra source: `npm test`. Kiểm tra font: chạy `python scripts/build-vn-overlay.py` với fontTools đã cài và Wine overlay nguồn. Không cần tạo lại font khi chỉ muốn chơi.
 
 Kiểm thử thực tế ngày 04/11/2026 trên Chromium máy tính: vào chiến dịch Bronze Age Art of War, chọn và ra lệnh di chuyển đơn vị, lưu ván, xuất ZIP, tải lại trang, nhập ZIP rồi tải lại đúng bản đồ và vị trí quân. AudioContext đã chạy sau thao tác người dùng; chưa xác nhận chất lượng âm thanh bằng tai, trận dài, máy yếu hoặc chơi mạng. Giao diện hướng dẫn đã kiểm tra ở chiều rộng 390 px; gameplay chỉ được xác nhận trên máy tính 1280 × 720.
+
+
+## Rise of Rome đầy đủ, màn hình lớn và font trong game (04/11/2026)
+
+Giao diện mới đọc gói `aoe-full.zip` đã chuẩn bị trên máy, không tự chạy bản Trial. Máy chủ local đọc `local-game/aoe-standard-web/game-config.json`; website tĩnh cho người chơi chọn ZIP. Khung game không còn giới hạn 800 px hiển thị, vẫn giữ tỷ lệ 4:3. Game gốc tiếp tục vẽ ở 800 × 600.
+
+Bộ chạy giữ cả executable AoE gốc và Rise of Rome, thiết lập thông tin cài đặt trong Wine và gắn nội dung đĩa vào CD ảo. Executable giữ nguyên byte từ nguồn đã tải; script chỉ điều chỉnh resource tên font trong DLL bản dịch sang UmiVN. Không cài font hoặc sửa registry Windows. Bộ game/CD đầy đủ nằm riêng trong `local-game`, không đưa lên Git.
+
+Bộ `.VnArial` của gói dịch đã thử thực tế nhưng hiển thị sai ký tự trong Wine. Bản cuối dùng UmiVN từ Liberation Sans theo OFL, có kiểm tra bảng glyph; font hộp thoại Win32 cũng được cấu hình trong Wine. Hỗ trợ bản lưu `.gmx` của Rise of Rome và `.gam` cũ. Các bản lưu có sẵn trong bộ nguồn được bỏ khỏi gói mới, nguồn gốc không bị sửa.
+
+Đã thử vào Bản đồ ngẫu nhiên với hai người chơi, chọn và ra lệnh cho dân, lưu ván, xuất ZIP rồi nhập ở phiên mở mới. Kiểm tra ở cửa sổ 1920 × 1080 cho khung game khoảng 1349 × 1012. Chưa xác nhận trận dài, hiệu năng máy yếu hoặc chơi nhiều người qua mạng. Xem README chính để mở chơi và chuẩn bị lại gói.

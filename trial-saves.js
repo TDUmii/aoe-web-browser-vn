@@ -1,9 +1,9 @@
-/* Local save-file transfer for the bundled 1997 trial. No automatic persistence. */
+/* Local save-file transfer for AoE / Rise of Rome. No automatic persistence. */
 (function (host) {
   'use strict';
   const LIMIT = 32 * 1024 * 1024, MAX_FILES = 256;
   function allowed(path) {
-    return /^appdir\/userapp\/(?:savegame\/[^\/\\:]+\.gam|(?:savegame\/)?game\d+\.nfo)$/i.test(path)
+    return /^appdir\/userapp\/(?:savegame\/[^\/\\:]+\.(?:gam|gmx)|(?:savegame\/)?game\d+\.nfo)$/i.test(path)
       && !path.split('/').some(p => p === '.' || p === '..') && !/[\x00-\x1f]/.test(path);
   }
   function mounted() {
@@ -42,7 +42,7 @@
     let total = 0;
     for (const [path, entry] of Object.entries(zip.files)) {
       if (entry.dir) continue;
-      if (!allowed(path)) throw new Error('ZIP chứa tệp không phải bản lưu AoE Trial.');
+      if (!allowed(path)) throw new Error('ZIP chứa tệp không phải bản lưu AoE / Rise of Rome.');
       if (staged.length >= MAX_FILES) throw new Error('ZIP có quá nhiều tệp.');
       const declared = entry._data?.uncompressedSize;
       if (!Number.isFinite(declared) || declared < 0 || total + declared > LIMIT) throw new Error('Dữ liệu giải nén vượt giới hạn 32 MB.');
@@ -52,7 +52,7 @@
       if (staged.some(f => f.path.toLowerCase() === path.toLowerCase())) throw new Error('ZIP chứa tên tệp trùng nhau.');
       staged.push({ path, data });
     }
-    if (!staged.length) throw new Error('ZIP không chứa bản lưu AoE Trial.');
+    if (!staged.length) throw new Error('ZIP không chứa bản lưu AoE / Rise of Rome.');
     return staged;
   }
   const api = {
@@ -61,7 +61,7 @@
       const { bytes, count } = makeArchive();
       const url = URL.createObjectURL(new Blob([bytes], { type: 'application/zip' }));
       const a = document.createElement('a');
-      a.href = url; a.download = 'aoe-trial-saves.zip'; a.click();
+      a.href = url; a.download = 'aoe-saves.zip'; a.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
       return count;
     },

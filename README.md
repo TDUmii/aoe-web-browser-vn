@@ -1,46 +1,41 @@
 # Đế Chế Web VN
 
-Chạy **Age of Empires 1997 Trial** bằng Boxedwine + Wine + WebAssembly trong trình duyệt. Menu đã Việt hóa; nội dung chiến dịch vẫn có phần tiếng Anh.
+Chơi **Age of Empires: The Rise of Rome đầy đủ** bằng trình duyệt, có giao diện tiếng Việt. Dùng Boxedwine + Wine + WebAssembly, bộ game được đọc ngay trên máy của bạn.
 
-- [Bản web đang công khai](https://tdumii.github.io/aoe-web-browser-vn/)
-- [Chi tiết Việt hóa, nguồn và giới hạn](README.VI.md)
+## Mở chơi
 
-## Chơi trên máy tính
+Trên máy đã chuẩn bị bộ game, chạy `choi-aoe.cmd` hoặc `npm start`, sau đó mở **http://localhost:8097/**. Máy chủ tự dùng gói tại `local-game/aoe-standard-web/aoe-full.zip`.
 
-Cần Node.js 18 trở lên. Nếu đã có runtime và dữ liệu game trong checkout:
+Trên website GitHub Pages, bấm **Chọn gói game đầy đủ (.zip)** và chọn `aoe-full.zip` đã chuẩn bị. Bộ game không được gửi lên máy chủ. Website không tự mở bản Trial.
+
+Dùng Chrome hoặc Edge trên máy tính, có chuột và bàn phím. Trong game chọn **Chơi đơn → Bản đồ ngẫu nhiên**, chọn số máy rồi bấm **Bắt đầu**. Nên thử 2 người chơi trước trên máy yếu.
+
+Khung game giãn theo cửa sổ và giữ tỷ lệ 4:3. Độ phân giải vẽ của game gốc vẫn là 800 × 600, nên phóng to không tạo sprite HD.
+
+## Lưu ván
+
+Lưu ván qua **Menu → Lưu ván chơi**, rồi bấm **Xuất bản lưu** dưới game để giữ ZIP. Lần sau chọn **Nhập bản lưu**, vào **Chơi đơn → Tải ván chơi**. Hỗ trợ `.gmx` của Rise of Rome và `.gam` cũ. Nhập thay thế bản lưu trùng tên. Đóng hoặc tải lại trang sẽ mất dữ liệu chưa xuất.
+
+## Chuẩn bị lại từ bộ nguồn trên máy
+
+Cần Python với `fontTools`, `pefile` và Node.js 18 trở lên. Gói đã kiểm tra bao gồm bộ game và nội dung đĩa CD được gắn vào ổ CD ảo của Wine, khoảng 270 MB. Mặc định các script dùng bộ nguồn offline đã chuẩn bị dưới `local-game/aoe-nphunghung/game-staging`; chúng không tự tải hoặc phát hành game.
 
 ```powershell
+python scripts/build-vn-font-overlay.py
+python scripts/prepare-full-game.py --cd-root "local-game/aoe-gold-cdroot-complete"
 npm start
 ```
 
-Mở **http://localhost:8097/**. Hoặc chạy `choi-aoe.cmd`. Nếu thiếu bộ chạy, dùng `npm run setup` trước. Cần chuột và bàn phím; nên dùng Chrome hoặc Edge.
+Bản dịch dùng resource của [aoe.vn](https://beyeucup.aoe.vn/cach-choi-aoe/huong-dan-tai-va-cai-dat-ban-aoe-viet-hoa-chuan-tieng-viet-5752.html). Các font gốc `.VnArial` hiển thị sai dấu trong Wine; script giữ chuỗi TCVN3 và đổi tên font trong DLL sang UmiVN, dùng cmap đã sửa của Liberation Sans theo OFL. Font hộp thoại Win32 được cấu hình trong Wine, không cài font hoặc sửa registry Windows.
 
-Trong game chọn **Chơi đơn → Chiến dịch**, nhập tên người chơi rồi chọn bài. Bản Trial có chiến dịch giới hạn. Mục **Bản đồ ngẫu nhiên** chỉ mở trang giới thiệu tính năng của bản đầy đủ.
+Nguồn bộ offline đã kiểm tra: [bài của uploader nphunghung](https://nphunghung.com/download-game-de-che-1-aoe-1/). Executable được giữ nguyên byte. Script lọc ván lưu/tên người chơi có sẵn trong nguồn khi tạo ZIP; thư mục nguồn không bị sửa.
 
-## Giữ bản lưu qua lần mở trang
-
-1. Mở **Menu → Lưu ván chơi** trong game và lưu ván.
-2. Bấm **Xuất bản lưu** bên dưới game để tải ZIP về máy.
-3. Lần sau, nhập ZIP bằng **Nhập bản lưu** ở menu chính rồi vào **Chơi đơn → Tải ván chơi**.
-
-Đóng hoặc tải lại trang xóa dữ liệu trong phiên. ZIP lưu chỉ chứa các tệp ván chơi của Trial; không phải ảnh chụp RAM hay toàn bộ bộ cài game. Nhập sẽ thay thế các bản lưu trùng tên.
-
-## Giới hạn thực tế
-
-- Đây là Trial 1997, không phải **The Rise of Rome** đầy đủ.
-- Chưa hỗ trợ kết nối online nhiều người trong trình chơi web này.
-- Game gốc 800 × 600; làm mịn canvas không tạo đồ họa HD.
-- Dùng giả lập CPU nên hiệu năng tùy máy; chưa có kiểm thử trận dài hoặc máy yếu.
-- Việt hóa menu không đồng nghĩa toàn bộ văn bản chiến dịch đã dịch.
-
-## Phát triển
+## Kiểm tra và phạm vi
 
 ```powershell
 npm test
 ```
 
-Các kiểm tra bao phủ phát hiện khung hình, lỗi khởi động và xuất/nhập ZIP lưu. Cần kiểm thử trình duyệt thật để xác nhận game tải lại được ván. Trình chơi chỉ bỏ màn hình tải sau khi lấy được mẫu pixel có hình từ vòng dựng hình của runtime; có hình chưa chứng minh menu hoặc một trận đã chạy hoàn chỉnh.
+Các kiểm tra bao phủ phát hiện hình ảnh, lỗi khởi động, bộ nhớ XHR nhị phân và nhập/xuất bản lưu với BrowserFS/JSZip thực. Hiệu năng trận dài, máy yếu và chơi mạng chưa được xác nhận. Bản đồ ngẫu nhiên và thao tác đơn vị cần kiểm tra trong trình duyệt thật; emulator báo Running chưa chứng minh game đã lên.
 
-`index.html` và `play.html` dùng cùng giao diện. `launcher.html?manual=1` là công cụ chạy tệp Windows riêng. `scripts/build-site.mjs` đóng gói website tĩnh.
-
-Runtime: GPL/LGPL; font: OFL với tên UmiVN; dữ liệu Trial và bản dịch có điều kiện riêng. Xem [NOTICE.md](NOTICE.md), [LICENSE](LICENSE), [trial-eula.txt](trial-eula.txt) và nguồn trong README.VI.md.
+Bộ game đầy đủ ở `local-game/` được giữ riêng, không đưa vào Git hoặc gói website tĩnh. Các tệp Trial cũ vẫn được giữ để đối chiếu nhưng không tự chạy. Runtime, nguồn và giấy phép xem [NOTICE.md](NOTICE.md), [LICENSE](LICENSE).

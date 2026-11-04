@@ -32,6 +32,7 @@ const FS_BASE = SITE_BASE + "fs/";
 const ROOT_ZIP = "fullWine1.7.55-v8";
 const OVERLAY_ZIP = "wine1.7.55-v8-min-online";
 const VIRTUAL_APP_ZIP = "userapp.zip";
+const isAoePlayer = Boolean(document.body.dataset.aoeAuto);
 
 const els = {
   dropzone: document.getElementById("appDropzone"),
@@ -69,6 +70,9 @@ const state = {
   booted: false,
   arch: "32", // "32" | "64"
   frameReady: false,
+  prepackaged: false,
+  fontOverlayBlob: null,
+  cdMounted: false,
 };
 
 // ─── helpers ────────────────────────────────────────────────────────────
@@ -77,11 +81,14 @@ function log(msg, level = "info") {
   const prefix = level === "error" ? "[!]" : level === "warn" ? "[~]" : "[·]";
   els.logOutput.textContent += `${ts} ${prefix} ${msg}\n`;
   els.logOutput.scrollTop = els.logOutput.scrollHeight;
+  if (isAoePlayer && /err:module:LdrInitializeThunk.*failed/i.test(msg) && window.AoEPlayer) {
+    window.AoEPlayer.fail("Game chưa khởi động được vì thiếu thành phần tương thích. Hãy kiểm tra bộ chạy game.");
+  }
 }
 function setStatus(text) {
   els.bootStatus.textContent = text;
   if (window.AoEPlayer) window.AoEPlayer.onStatus(text);
-  if (document.body.dataset.aoeAuto === "trial") {
+  if (isAoePlayer) {
     const translations = {
       "Loading Boxedwine runtime…": "Đang tải bộ chạy game...",
       "Configuring Wine launch…": "Đang chuẩn bị môi trường game...",
@@ -161,8 +168,9 @@ function installXhrInterceptor() {
     if (u.startsWith("/api/fs/")) u = FS_BASE + u.slice("/api/fs/".length);
     // The bundled Vietnamese game uses a verified font-mapped Wine overlay.
     // Keep the default original overlay for the manual launcher.
-    if (document.body.dataset.aoeAuto === "trial" && u.includes("wine1.7.55-v8-min-online.zip")) {
-      u = SITE_BASE + "assets/vn-wine-overlay.css?v=umi3";
+    if (isAoePlayer && u.includes("wine1.7.55-v8-min-online.zip")) {
+      if (state.fontOverlayBlob) this.__wap_overlay = true;
+      else u = SITE_BASE + "assets/vn-wine-overlay.css?v=umi3";
     }
     // IDM browser integration can intercept .zip XHR responses (204); serve Wine archives via a neutral suffix.
     if (location.hostname === "127.0.0.1" || location.hostname === "localhost") {
@@ -173,7 +181,7 @@ function installXhrInterceptor() {
     return origOpen.call(this, method, u, async !== false, user, pass);
   };
   NativeXHR.prototype.setRequestHeader = function (k, v) {
-    if (this.__wap_url && this.__wap_url.includes(VIRTUAL_APP_ZIP)) {
+    if (this.__wap_overlay || (this.__wap_url && this.__wap_url.includes(VIRTUAL_APP_ZIP))) {
       this.__wap_headers = this.__wap_headers || {};
       this.__wap_headers[k.toLowerCase()] = v;
       return;
@@ -182,8 +190,9 @@ function installXhrInterceptor() {
   };
   NativeXHR.prototype.send = function (body) {
     const url = this.__wap_url || "";
-    if (!url.includes(VIRTUAL_APP_ZIP)) return origSend.call(this, body);
-    if (!state.appZipBlob) {
+    if (!this.__wap_overlay && !url.includes(VIRTUAL_APP_ZIP)) return origSend.call(this, body);
+    const localBlob = this.__wap_overlay ? state.fontOverlayBlob : state.appZipBlob;
+    if (!localBlob) {
       log("Internal: XHR for user app zip but no blob ready.", "error");
       this.readyState = 4; this.status = 500;
       this.onreadystatechange && this.onreadystatechange();
@@ -194,21 +203,23 @@ function installXhrInterceptor() {
     const headers = xhr.__wap_headers || {};
     const m = headers["range"] && /bytes=(\d+)-(\d+)?/.exec(headers["range"]);
     const start = m ? Number(m[1]) : 0;
-    const end = m ? (m[2] ? Math.min(Number(m[2])+1, state.appZipBlob.size) : state.appZipBlob.size) : state.appZipBlob.size;
-    const chunk = m ? state.appZipBlob.slice(start, end) : state.appZipBlob;
+    const end = m ? (m[2] ? Math.min(Number(m[2])+1, localBlob.size) : localBlob.size) : localBlob.size;
+    const chunk = m ? localBlob.slice(start, end) : localBlob;
     reader.onload = () => {
       const responseBytes = new Uint8Array(reader.result);
       const status = m ? 206 : 200;
       Object.defineProperty(xhr, "readyState", { value: 4, writable: true });
       Object.defineProperty(xhr, "status", { value: status, writable: true });
-      let responseText = "";
-      for (let i = 0; i < responseBytes.length; i++) {
-        responseText += String.fromCharCode(responseBytes[i]);
+      if (xhr.responseType !== "arraybuffer") {
+        const parts = [];
+        for (let i = 0; i < responseBytes.length; i += 32768) {
+          parts.push(String.fromCharCode.apply(null, responseBytes.subarray(i, i + 32768)));
+        }
+        Object.defineProperty(xhr, "responseText", { value: parts.join(""), writable: true });
       }
-      Object.defineProperty(xhr, "responseText", { value: responseText, writable: true });
       Object.defineProperty(xhr, "response", { value: responseBytes.buffer, writable: true });
       xhr.getResponseHeader = function (name) {
-        if (name.toLowerCase() === "content-length") return String(state.appZipBlob.size);
+        if (name.toLowerCase() === "content-length") return String(localBlob.size);
         return null;
       };
       if (xhr.onreadystatechange) xhr.onreadystatechange();
@@ -268,6 +279,11 @@ Module.onAbort = function () { if (window.AoEPlayer) window.AoEPlayer.fail("Bộ
 Module.locateFile = function (path) { return ${JSON.stringify(RUNTIME_BASE)} + path; };
 window.__BoxedwineConfig = Config;
 window.__BoxedwineModule = Module;
+${document.body.dataset.aoeAuto === "full" ? `var __aoeParams = getEmulatorParams; getEmulatorParams = function () {
+  var args = __aoeParams();
+  ${state.cdMounted ? 'args.splice(args.indexOf("/bin/wine"), 0, "-mount", "/root/files/cdrom", "/mnt/cdrom");' : ''}
+  return args.concat(["nostartup"]);
+};` : ''}
 `;
   await runInlineScript(shellSrc + "\n;\n" + configCode);
   if (!window.__BoxedwineConfig) {
@@ -576,7 +592,7 @@ async function bootAndRun() {
   try {
     installXhrInterceptor();
     await loadBoxedwineDeps();
-    if (!(document.body.dataset.aoeAuto === "trial" && state.appZipBlob)) {
+    if (!(state.prepackaged && state.appZipBlob)) {
       await buildAppZip();
     }
     await runShellWithConfig();
@@ -923,6 +939,7 @@ async function launchBundledTrial() {
       });
     await loadBoxedwineDeps();
     state.appZipBlob = await gamePromise; // Already rooted as userapp/ and compressed on the server.
+    state.prepackaged = true;
     state.pickedExe = {
       name: "EMPIRES.EXE", originalName: "EMPIRES.EXE", path: "EMPIRES.EXE",
       bytes: new Uint8Array(),
@@ -939,6 +956,79 @@ async function launchBundledTrial() {
     const retry = document.getElementById("retryGame");
     if (retry) retry.hidden = false;
   }
+}
+
+// Full game packages stay on the player's machine. Both local automatic launch
+// and the public file picker use the same archive, including its Wine fonts.
+async function launchFullArchive(blob) {
+  if (state.bootInFlight || state.booted) return;
+  if (blob.size > 300 * 1024 * 1024) throw new Error("Gói game vượt giới hạn 300 MB.");
+  await loadBoxedwineDeps();
+  let zip;
+  try { zip = new JSZip(await blob.arrayBuffer()); }
+  catch { throw new Error("Không đọc được gói game. Hãy chọn tệp aoe-full.zip đã chuẩn bị đầy đủ."); }
+  let expanded = 0;
+  for (const [name, file] of Object.entries(zip.files)) {
+    if (file.dir) continue;
+    if (!/^(userapp|web|cdrom)\//i.test(name) || name.includes("\\") || /[\x00-\x1f:]/.test(name) || name.split("/").some(part => part === "." || part === "..")) {
+      throw new Error("Gói game chứa đường dẫn không hợp lệ.");
+    }
+    expanded += file._data?.uncompressedSize || 0;
+    if (expanded > 800 * 1024 * 1024) throw new Error("Dữ liệu game sau giải nén vượt giới hạn 800 MB.");
+  }
+  const find = name => Object.keys(zip.files).find(path => path.toLowerCase() === name.toLowerCase());
+  const exe = find("userapp/empiresx.exe");
+  const base = find("userapp/empires.exe");
+  const expansion = find("userapp/data2/empires.dat");
+  const overlay = find("web/wine-overlay.zip");
+  if (!exe || !base || !expansion || !overlay) {
+    throw new Error("Gói game chưa có đủ AoE gốc, Rise of Rome hoặc font tiếng Việt. Hãy chọn tệp aoe-full.zip đã chuẩn bị.");
+  }
+  state.appZipBlob = blob;
+  state.fontOverlayBlob = new Blob([zip.files[overlay].asUint8Array()], { type: "application/zip" });
+  state.prepackaged = true;
+  state.cdMounted = Boolean(find("cdrom/.windows-label"));
+  state.arch = "32";
+  state.pickedExe = { path: exe.slice("userapp/".length), name: "Empiresx.exe", originalName: "Empiresx.exe", bytes: new Uint8Array() };
+  const chooser = document.getElementById("chooseGame");
+  if (chooser) chooser.hidden = true;
+  if (window.AoEPlayer) window.AoEPlayer.begin();
+  setStatus("Đang khởi động Đế Chế - Rise of Rome...");
+  await bootAndRun();
+}
+
+async function launchFullGame() {
+  const chooser = document.getElementById("chooseGame");
+  const intro = document.getElementById("welcomeMessage");
+  const showChoice = message => {
+    if (window.AoEPlayer) window.AoEPlayer.idle();
+    if (chooser) chooser.hidden = false;
+    if (intro) intro.textContent = "Chơi Đế Chế - Rise of Rome đầy đủ";
+    els.bootProgress.hidden = true;
+    els.bootStatus.textContent = message;
+  };
+  const input = document.getElementById("fullGameZip");
+  document.getElementById("chooseFullZip").addEventListener("click", () => input.click());
+  input.addEventListener("change", async () => {
+    const file = input.files[0]; input.value = "";
+    if (!file) return;
+    try { await launchFullArchive(file); }
+    catch (error) { showChoice(error.message); }
+  });
+  try {
+    const reply = await fetch(SITE_BASE + "game-config.json?v=full1", { cache: "no-store" });
+    if (!reply.ok) throw new Error("Không đọc được cấu hình game.");
+    const config = await reply.json();
+    if (config.edition !== "full") {
+      showChoice("Chọn gói Đế Chế đầy đủ trên máy để bắt đầu. Không tự mở bản Trial.");
+      return;
+    }
+    if (window.AoEPlayer) window.AoEPlayer.begin();
+    setStatus("Đang tải bản Đế Chế đầy đủ trên máy...");
+    const game = await fetch(new URL(config.game, location.href));
+    if (!game.ok) throw new Error("Không tải được bộ game đầy đủ trên máy.");
+    await launchFullArchive(await game.blob());
+  } catch (error) { showChoice(error.message); }
 }
 
 // After an exe is staged, sniff its PE header: on 64-bit mode a 32-bit-only
@@ -964,5 +1054,7 @@ log("WindowsAppPlayer ready. Drop a .exe/.msi, or click 'Try demo (7-Zip)'.");
 log("Modern/64-bit apps: flip the wine64 toggle — first boot fetches its rootfs once.");
 if (document.body.dataset.aoeAuto === "trial") {
   void launchBundledTrial();
+} else if (document.body.dataset.aoeAuto === "full") {
+  void launchFullGame();
 }
 })();

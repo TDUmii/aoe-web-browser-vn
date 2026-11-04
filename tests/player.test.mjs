@@ -14,7 +14,7 @@ function player() {
         classList: { add: key => classes.add(key), remove: key => classes.delete(key), contains: key => classes.has(key) },
         addEventListener: (name, handler) => events.set(name, handler),
         dispatchEvent: event => events.get(event.type)?.(event), focus() {},
-        showModal() {}
+        showModal() {}, getContext(type, attributes) { return { type, attributes }; }
       });
     }
     return elements.get(id);
@@ -27,6 +27,7 @@ function player() {
     performance: { now: () => now },
     setTimeout: (callback, delay) => { const id = nextTimer++; timers.set(id, { callback, delay }); return id; },
     clearTimeout: id => timers.delete(id),
+    setInterval: () => 1, clearInterval() {},
     addEventListener: (name, handler) => windowEvents.set(name, handler),
     confirm: () => { confirms++; return confirmResult; },
     Module: { ctx: {
@@ -43,6 +44,13 @@ function player() {
     acceptReload() { confirmResult = true; }
   };
 }
+const choosing = player();
+assert.equal(choosing.element('canvas').getContext('webgl').attributes.preserveDrawingBuffer, true, 'paused dialogs retain a readable frame');
+assert.equal(choosing.timers.size, 0, 'file selection has no boot timeout');
+choosing.context.AoEPlayer.begin();
+assert.equal(choosing.timers.size, 1, 'loading a full package starts the boot watchdog');
+choosing.context.AoEPlayer.idle();
+assert.equal(choosing.timers.size, 0, 'returning to the file picker cancels boot timeout');
 const p = player();
 p.context.AoEPlayer.onStatus('Running...');
 p.frame(false);

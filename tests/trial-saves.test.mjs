@@ -70,4 +70,13 @@ realFs.mkdirSync('/home/app/userapp/SAVEGAME');
 await api.import({ size: archive.bytes.length, arrayBuffer: async () => archive.bytes.buffer });
 assert.deepEqual([...realFs.readFileSync('/home/app/userapp/SAVEGAME/test.gam')], [...payload]);
 assert.equal(api.makeArchive().count, 1);
-console.log('Trial saves: real JSZip roundtrip and invalid-archive atomic prevalidation passed.');
+// Live Rise of Rome saves use .gmx; preserve legacy .gam alongside them.
+const ror = new context.JSZip();
+ror.file('appdir/userapp/savegame/rome.gmx', new Uint8Array([5, 6, 7]));
+const rorBytes = ror.generate({ type: 'uint8array' });
+await api.import({ size: rorBytes.length, arrayBuffer: async () => rorBytes.buffer });
+assert.deepEqual([...realFs.readFileSync('/home/app/userapp/SAVEGAME/rome.gmx')], [5, 6, 7]);
+const both = api.validateArchive(api.makeArchive().bytes);
+assert.equal(both.length, 2, 'export preserves both legacy .gam and expansion .gmx saves');
+assert.deepEqual([...both.find(f => /rome\.gmx$/i.test(f.path)).data], [5, 6, 7]);
+console.log('AoE saves: real BrowserFS/JSZip .gam/.gmx roundtrip and ZIP validation passed.');
