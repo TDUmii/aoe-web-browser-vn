@@ -4,29 +4,41 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#000000">
-<meta name="description" content="Chơi Đế Chế 1997 bản tiếng Việt ngay trên trình duyệt.">
-<title>Đế Chế Việt Hóa - Chơi Ngay</title>
+<meta name="description" content="Chơi chiến dịch AoE 1997 Trial trên trình duyệt với menu tiếng Việt. Dành cho máy tính có chuột và bàn phím.">
+<title>Đế Chế Web VN - AoE 1997 Trial</title>
+<link rel="icon" href="./favicon.svg" type="image/svg+xml">
 <style>
 :root{color-scheme:dark}
 *{box-sizing:border-box}
 html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#000}
 body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
-#screen-container{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#000}
-#canvas{display:block;width:min(800px,100vw,133.333333vh);height:auto;aspect-ratio:4/3;max-width:100%;max-height:100%;object-fit:contain;image-rendering:auto;outline:none}
+#screen-container{position:absolute;inset:0 0 68px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#000}
+#canvas{display:block;width:min(800px,100vw,calc((100dvh - 68px) * 4 / 3));height:auto;aspect-ratio:4/3;max-width:100%;max-height:100%;object-fit:contain;image-rendering:auto;outline:none}
 #frame-wrap,#appFrame{display:none!important}
 #overlay{position:fixed;inset:0;z-index:5;background:#000;display:grid;place-items:center;transition:opacity .4s}
 #overlay.is-hidden{opacity:0;pointer-events:none;visibility:hidden}
 #loading{width:min(310px,85vw);text-align:center;color:#d7d0bc}
 #loading .mark{font:700 36px Georgia,serif;letter-spacing:.05em;color:#dec184}
-#loading p{font:13px/1.7 system-ui,sans-serif;white-space:normal;color:#c1bdaf;margin:16px 0 12px}
-#bootStatus{font:12px/1.5 system-ui,sans-serif;color:#9b9e95;margin-top:11px}
+#loading p{font:14px/1.7 system-ui,sans-serif;white-space:normal;color:#c1bdaf;margin:16px 0 12px}
+#bootStatus{font:14px/1.5 system-ui,sans-serif;color:#9b9e95;margin-top:11px}
 #bootProgress{display:block;width:100%;height:3px;accent-color:#cdb16e}
 #retryGame{background:#d1b67b;border:0;border-radius:7px;padding:9px 15px;color:#15140e;font-weight:700;cursor:pointer;margin-top:16px}
-#recovery{position:fixed;bottom:12px;right:12px;z-index:4;display:none;gap:8px;align-items:center;border:1px solid #f1d79755;border-radius:9px;background:#151611ed;color:#faf0d6;padding:8px 10px;font:600 12px system-ui;opacity:.25;cursor:pointer;transition:opacity .2s}
-#recovery:hover,#recovery:focus-visible{opacity:1}
-body.started #recovery{display:flex}
-#recovery:focus-visible{outline:2px solid #e6c179}
-#info{font-size:11px;color:#aab6a6;margin-top:8px;line-height:1.5}
+#playerTools{position:fixed;bottom:0;left:0;right:0;z-index:7;min-height:60px;padding:8px 16px;display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;background:#10100f;border-top:1px solid #393227}
+#playerTools button,dialog button{min-height:44px;border:1px solid #776647;background:#201e18;color:#f3e3c4;border-radius:6px;padding:8px 12px;font:600 14px system-ui;cursor:pointer}
+#playerTools button:hover,dialog button:hover{background:#3c3425}
+#playerTools button:disabled{opacity:.45;cursor:wait}
+button:focus-visible{outline:2px solid #f1ce88;outline-offset:3px}
+#saveMessage{position:fixed;bottom:68px;left:50%;transform:translateX(-50%);z-index:8;max-width:min(640px,95vw);padding:8px 12px;background:#201e18;color:#f3e3c4;font:14px/1.5 system-ui;text-align:center}
+#saveMessage:empty{display:none}
+#edition{position:fixed;top:8px;left:12px;z-index:6;font:12px system-ui;color:#c6bda9;margin:0}
+dialog{width:min(560px,calc(100vw - 24px));max-height:85dvh;overflow:auto;padding:24px;border:1px solid #776647;border-radius:12px;background:#181711;color:#f1e4cb;font:16px/1.6 system-ui}
+dialog::backdrop{background:#000c}
+dialog h1{font:700 26px Georgia,serif;margin:0 0 16px;color:#e6c486}
+dialog p{margin:12px 0}
+dialog li{margin:8px 0}
+dialog form{text-align:right;margin-top:20px}
+@media(max-width:600px){#screen-container{bottom:112px}#canvas{width:min(800px,100vw,calc((100dvh - 112px) * 4 / 3))}#playerTools{padding:8px;gap:6px}#playerTools button{font-size:13px;padding:8px 10px}#saveMessage{bottom:112px}}
+#info{font-size:14px;color:#aab6a6;margin-top:8px;line-height:1.5}
 [hidden],.hidden-controls{display:none!important}
 #debug{display:none;position:fixed;bottom:0;left:0;right:0;max-height:35vh;overflow:auto;padding:10px;background:#121212ed;color:#aee2ad;z-index:6;white-space:pre-wrap;font:11px Consolas,monospace}
 body.debug #debug{display:block}
@@ -41,11 +53,11 @@ body.debug #debug{display:block}
 <div id="overlay" role="status" aria-live="polite">
   <div id="loading">
     <div class="mark">ĐẾ CHẾ</div>
-    <p id="welcomeMessage">Đang mở game...</p>
+    <p id="welcomeMessage">Đang mở bản chơi thử AoE 1997...</p>
     <progress id="bootProgress" max="100" value="1"></progress>
     <div id="bootStatus">Đang chuẩn bị...</div>
     <button id="retryGame" type="button" hidden>Khởi động lại game</button>
-    <div id="info" hidden>Nếu không lên hình, hãy thử cửa sổ ẩn danh hoặc tắt IDM trên trang này.</div>
+    <div id="info">Dành cho máy tính có chuột và bàn phím. Vào Chơi đơn → Chiến dịch để bắt đầu.</div>
   </div>
 </div>
 <div class="hidden-controls" aria-hidden="true">
@@ -57,74 +69,31 @@ body.debug #debug{display:block}
   <button id="saveStateBtn"></button><button id="stopBtn"></button>
   <input type="radio" id="arch32" checked><input type="radio" id="arch64">
 </div>
-<button id="recovery" type="button" aria-label="Khởi động lại khi màn hình đen" title="Màn hình đen? Bấm để tải lại game">↻ Tải lại</button>
+<p id="edition">AoE 1997 · Bản chơi thử · Menu tiếng Việt</p>
+<nav id="playerTools" aria-label="Điều khiển trình chơi">
+  <button id="fullscreenGame" type="button">Toàn màn hình</button>
+  <button id="exportSaves" type="button" disabled>Xuất bản lưu</button>
+  <button id="importSaves" type="button" disabled>Nhập bản lưu</button>
+  <button id="helpGame" type="button">Cách chơi</button>
+  <button id="recovery" type="button">Tải lại game</button>
+</nav>
+<input id="saveImport" type="file" accept=".zip,application/zip" hidden>
+<p id="saveMessage" role="status" aria-live="polite"></p>
+<dialog id="gameHelp" aria-labelledby="helpTitle">
+  <h1 id="helpTitle">Chơi Đế Chế trong trình duyệt</h1>
+  <p>Đây là <strong>AoE 1997 Trial</strong>, có menu tiếng Việt. Một số nội dung hướng dẫn trong game vẫn bằng tiếng Anh. Bản này không phải Rise of Rome đầy đủ.</p>
+  <ol>
+    <li>Chọn <strong>Chơi đơn → Chiến dịch</strong>, chọn bài rồi bấm bắt đầu. Trong bản Trial, Bản đồ ngẫu nhiên và một số mục khác chỉ mở trang giới thiệu.</li>
+    <li>Nhấp chuột trái để chọn quân, chuột phải để di chuyển hoặc giao việc. Kéo chuột trái để chọn nhiều quân. Đưa chuột tới mép bản đồ để cuộn. Bấm Menu ở góc trên phải để mở các lệnh trong trận.</li>
+    <li>Muốn chơi tiếp lần sau: <strong>lưu ván trong menu game trước</strong>, sau đó bấm <strong>Xuất bản lưu</strong> để tải tệp ZIP về máy.</li>
+    <li>Lần sau, bấm <strong>Nhập bản lưu</strong> ở menu chính, chọn ZIP đã xuất rồi vào <strong>Chơi đơn → Tải ván chơi</strong>. Tải lại hoặc đóng trang sẽ xóa dữ liệu chưa xuất.</li>
+  </ol>
+  <p>Chưa hỗ trợ chơi online nhiều người. Nên dùng Chrome hoặc Edge trên máy tính, có chuột và bàn phím. Nhấp vào game để trình duyệt cho phép phát âm thanh.</p>
+  <form method="dialog"><button>Quay lại game</button></form>
+</dialog>
 <div id="debug"><div id="logOutput"></div></div>
+<script src="./player.js"></script>
+<script src="./trial-saves.js"></script>
 <script src="./app.js"></script>
-<script>
-// Keep the launch screen visible while Wine is still painting its first frames.
-// "Running..." signals that the CPU emulator started, NOT that the game menu is ready.
-const overlay = document.getElementById("overlay");
-const status = document.getElementById("bootStatus");
-const canvas = document.getElementById("canvas");
-const retry = document.getElementById("retryGame");
-const recovery = document.getElementById("recovery");
-const welcome = document.getElementById("welcomeMessage");
-const info = document.getElementById("info");
-const debug = new URLSearchParams(location.search).has("debug");
-if (debug) document.body.classList.add("debug");
-
-function reloadGame() { window.location.reload(); }
-retry.addEventListener("click", reloadGame);
-recovery.addEventListener("click", reloadGame);
-
-let bootStarted = false;
-let bootReady = false;
-let failed = false;
-function showFailure(message) {
-  if (failed) return;
-  failed = true;
-  overlay.classList.remove("is-hidden");
-  welcome.textContent = message;
-  status.textContent = "Có thể thử tải lại hoặc mở cửa sổ ẩn danh để tránh lỗi tiện ích mở rộng.";
-  document.getElementById("bootProgress").hidden = true;
-  retry.hidden = false;
-  info.hidden = false;
-  document.body.classList.remove("started");
-}
-function onStatus() {
-  if (failed) return;
-  const s = status.textContent || "";
-  if (/Không thể|Exception thrown|(?:^|\s)(?:failed|error)(?:\s|$)/i.test(s)) {
-    showFailure("Không khởi chạy được Đế Chế trên trình duyệt này.");
-    return;
-  }
-  if (!bootStarted && /Running/i.test(s)) {
-    bootStarted = true;
-    welcome.textContent = "Game đang dựng hình và nạp menu...";
-    // The first splash/black frame can persist 15-25s on slower laptops.
-    // Do not remove loading UI just because the emulator reports Running.
-    setTimeout(() => {
-      if (failed) return;
-      bootReady = true;
-      overlay.classList.add("is-hidden");
-      document.body.classList.add("started");
-      canvas.focus({ preventScroll: true });
-    }, 22000);
-  }
-}
-new MutationObserver(onStatus).observe(status,{childList:true,subtree:true,characterData:true});
-onStatus();
-// A watchdog avoids an infinite opaque black page if the emulator fails to start.
-setTimeout(() => {
-  if (!bootStarted && !failed) showFailure("AOE chưa khởi động được. Kiểm tra mạng hoặc WebGL của trình duyệt.");
-}, 65000);
-canvas.addEventListener("webglcontextlost", e => {
-  e.preventDefault();
-  showFailure("Trình duyệt bị mất kết nối với bộ xử lý đồ họa (WebGL).");
-});
-window.addEventListener("unhandledrejection", e => {
-  if (!bootReady && !failed) showFailure("Bộ giả lập gặp lỗi khi tải hoặc khởi chạy game.");
-});
-</script>
 </body>
 </html>

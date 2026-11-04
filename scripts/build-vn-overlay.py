@@ -18,7 +18,8 @@ with ZipFile(src) as inp,ZipFile(dst,'w',compression=ZIP_DEFLATED,compresslevel=
   data=inp.read(info.filename)
   if info.filename.endswith(('LiberationSans-Regular.ttf','LiberationSans-Bold.ttf')):
    font=TTFont(BytesIO(data))
-   base=font.getBestCmap()
+   # cmap tables may share their dict: remapping must always read original glyphs.
+   base=font.getBestCmap().copy()
    for table in font['cmap'].tables:
     if table.isUnicode():
      for before,after in zip(old,new):
@@ -33,6 +34,13 @@ with ZipFile(src) as inp,ZipFile(dst,'w',compression=ZIP_DEFLATED,compresslevel=
       name.string=renamed.encode(name.getEncoding(),errors='replace')
    buf=BytesIO();font.save(buf)
    data=buf.getvalue()
+   # Check the serialized font, including every Unicode cmap used by Wine.
+   checked=TTFont(BytesIO(data))
+   for table in checked['cmap'].tables:
+    if table.isUnicode():
+     for before,after in zip(old,new):
+      assert table.cmap.get(ord(before))==base[ord(after)], (
+       info.filename,table.platformID,table.platEncID,before,after)
    print('Font renamed, TCVN3 glyphs corrected:',info.filename,len(data))
   if info.filename=='home/username/.wine/system.reg':
    marker=b'"Arial (TrueType)"="Arial.TTF"'

@@ -37,6 +37,10 @@ const server = http.createServer((req, res) => {
     // browserfs.boxedwine.js hardcodes on-demand root-zip fetches to /api/fs/;
     // serve the same files there as under /fs/.
     if (urlPath.startsWith("/api/fs/")) urlPath = "/fs/" + urlPath.slice("/api/fs/".length);
+    // Serve the download-manager-safe aliases directly from the tracked ZIPs.
+    // A fresh checkout must not require a second 50 MB copy to start locally.
+    if (urlPath === "/fs/fullWine1.7.55-v8.asset") urlPath = "/fs/fullWine1.7.55-v8.zip";
+    if (urlPath === "/fs/wine1.7.55-v8-min-online.asset") urlPath = "/fs/wine1.7.55-v8-min-online.zip";
 
     // Contain every lookup inside the project directory.
     const filePath = path.normalize(path.join(ROOT, urlPath));

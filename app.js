@@ -78,7 +78,18 @@ function log(msg, level = "info") {
   els.logOutput.textContent += `${ts} ${prefix} ${msg}\n`;
   els.logOutput.scrollTop = els.logOutput.scrollHeight;
 }
-function setStatus(text) { els.bootStatus.textContent = text; }
+function setStatus(text) {
+  els.bootStatus.textContent = text;
+  if (window.AoEPlayer) window.AoEPlayer.onStatus(text);
+  if (document.body.dataset.aoeAuto === "trial") {
+    const translations = {
+      "Loading Boxedwine runtime…": "Đang tải bộ chạy game...",
+      "Configuring Wine launch…": "Đang chuẩn bị môi trường game...",
+      "Starting emulator…": "Đang khởi động bộ giả lập...",
+    };
+    if (translations[text]) els.bootStatus.textContent = translations[text];
+  }
+}
 window.__wapLog = log;
 window.__wapStatus = setStatus;
 
@@ -151,7 +162,7 @@ function installXhrInterceptor() {
     // The bundled Vietnamese game uses a verified font-mapped Wine overlay.
     // Keep the default original overlay for the manual launcher.
     if (document.body.dataset.aoeAuto === "trial" && u.includes("wine1.7.55-v8-min-online.zip")) {
-      u = SITE_BASE + "assets/vn-wine-overlay.css?v=umi2";
+      u = SITE_BASE + "assets/vn-wine-overlay.css?v=umi3";
     }
     // IDM browser integration can intercept .zip XHR responses (204); serve Wine archives via a neutral suffix.
     if (location.hostname === "127.0.0.1" || location.hostname === "localhost") {
@@ -252,6 +263,8 @@ Module.canvas = document.getElementById("canvas");
 Module.print = function (t) { window.__wapLog(String(t)); };
 Module.printErr = function (t) { window.__wapLog(String(t), "warn"); };
 Module.setStatus = function (t) { if (t) window.__wapStatus(t); };
+Module.postMainLoop = function () { if (window.AoEPlayer) window.AoEPlayer.onFrame(); };
+Module.onAbort = function () { if (window.AoEPlayer) window.AoEPlayer.fail("Bộ giả lập đã dừng do lỗi. Hãy thử tải lại."); };
 Module.locateFile = function (path) { return ${JSON.stringify(RUNTIME_BASE)} + path; };
 window.__BoxedwineConfig = Config;
 window.__BoxedwineModule = Module;

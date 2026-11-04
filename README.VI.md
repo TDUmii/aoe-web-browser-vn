@@ -52,3 +52,15 @@ Nguồn tạo bản vá font: `scripts/build-vn-overlay.py`. Source được đ�
 - Gói game được kiểm tra dung lượng và chữ ký ZIP trước khi chạy để tránh giả lập khởi động trên tệp tải lỗi.
 - Màn hình AOE được hiển thị ở kích thước gốc tối đa 800×600 (không phóng to răng cưa) và dùng bộ lọc làm mịn của trình duyệt. Đây là cải thiện hiển thị; **font gốc bên trong AOE 1997 vẫn bị giới hạn bởi engine và dữ liệu 800×600**.
 - Game đã được kiểm thử vào menu và màn hình chọn chiến dịch, chưa khẳng định tất cả tình trạng treo/mất hình trên mọi laptop đã được xử lý.
+
+## Bản sửa chơi thử ngày 04/11/2026
+
+- Sửa lỗi ánh xạ font TCVN3 bị áp dụng chồng giữa các Unicode cmap. Bảng glyph gốc được sao chép trước khi chỉnh, và builder kiểm tra lại mọi ánh xạ trong font đã serialize. Overlay dùng phiên bản cache mới.
+- Thay thời gian chờ cứng 22 giây bằng kiểm tra mẫu pixel ngay trong vòng dựng hình WebGL. Có hình chưa đồng nghĩa menu sẵn sàng. Nếu sau 120 giây chưa có hình, trình chơi hiện khôi phục.
+- Có nút Toàn màn hình, Cách chơi, Xuất bản lưu và Nhập bản lưu. Lưu ván trong Menu của game trước khi xuất; đóng hoặc tải lại trang xóa dữ liệu chưa xuất.
+- ZIP lưu chỉ nhận các tệp .gam trong SAVEGAME và metadata game*.nfo. Có giới hạn kích thước, số tệp và kiểm tra đường dẫn trước khi nhập. Tệp trùng tên sẽ được thay thế.
+- README chính đã đổi từ hướng dẫn WindowsAppPlayer chung sang hướng dẫn đúng AoE Trial.
+
+Kiểm tra source: `npm test`. Kiểm tra font: chạy `python scripts/build-vn-overlay.py` với fontTools đã cài và Wine overlay nguồn. Không cần tạo lại font khi chỉ muốn chơi.
+
+Kiểm thử thực tế ngày 04/11/2026 trên Chromium máy tính: vào chiến dịch Bronze Age Art of War, chọn và ra lệnh di chuyển đơn vị, lưu ván, xuất ZIP, tải lại trang, nhập ZIP rồi tải lại đúng bản đồ và vị trí quân. AudioContext đã chạy sau thao tác người dùng; chưa xác nhận chất lượng âm thanh bằng tai, trận dài, máy yếu hoặc chơi mạng. Giao diện hướng dẫn đã kiểm tra ở chiều rộng 390 px; gameplay chỉ được xác nhận trên máy tính 1280 × 720.

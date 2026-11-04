@@ -1,11 +1,12 @@
-﻿{
-    "name":  "aoe-web-vn-launcher",
-    "version":  "1.0.0",
-    "description":  "Vietnamese browser launcher for user-provided Age of Empires game files via Boxedwine",
-    "private":  true,
-    "type":  "module",
-    "scripts":  {
-                    "setup":  "node scripts/fetch-runtime.mjs",
-                    "start":  "node server.mjs"
-                }
+{
+  "name": "aoe-web-vn-launcher",
+  "version": "1.0.0",
+  "description": "Vietnamese browser launcher for user-provided Age of Empires game files via Boxedwine",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "setup": "node scripts/fetch-runtime.mjs",
+    "start": "node server.mjs",
+    "test": "node tests/player.test.mjs && node tests/trial-saves.test.mjs"
+  }
 }
