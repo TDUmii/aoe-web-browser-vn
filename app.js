@@ -1065,6 +1065,10 @@ async function launchFullGame() {
     const reply = await fetch(SITE_BASE + "game-config.json?v=full1", { cache: "no-store" });
     if (!reply.ok) throw new Error("Không đọc được cấu hình game.");
     const config = await reply.json();
+    if (config.edition === "translation") {
+      location.replace(SITE_BASE + "viet-hoa.html");
+      return;
+    }
     if (config.edition !== "full") {
       retry.hidden = true;
       showChoice("Chọn gói Đế Chế đầy đủ trên máy để bắt đầu. Không tự mở bản Trial.");

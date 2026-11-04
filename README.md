@@ -1,8 +1,20 @@
 # Đế Chế Web VN
 
+## Chơi trên web với tiếng Việt
+
+Mở **https://tdumii.github.io/aoe-web-browser-vn/viet-hoa.html**. Lưu nút **Đế Chế tiếng Việt** vào thanh dấu trang một lần, mở Viva La RTS và bấm dấu trang trong tab game. Công cụ đổi văn bản và font ngay trong tab, không yêu cầu ZIP game hay máy chủ local. Sau khi tải lại game, bấm lại dấu trang.
+
+Bản dịch có 924 mục, tập trung vào menu, tạo trận, quân/công trình, nâng cấp, thao tác, lưu/tải và ngoại giao. Chưa dịch toàn bộ truyện chiến dịch, lịch sử và các mô tả trợ giúp dài. Game tiếp tục do Viva La RTS cung cấp; trang này chỉ phát hành bản dịch và công cụ áp dụng cá nhân, không sao chép game của họ. Công cụ nhận diện module đang được trang sử dụng, nên có thể cần cập nhật khi website thay đổi cấu trúc.
+
+Nếu đã có trình quản lý userscript, có thể cài `assets/vivalarts-vi.user.js` để tự bật dịch. Chỉ dùng trong trang `https://vivalarts.com/`. Không cần cài trình quản lý userscript khi dùng dấu trang.
+
+Nguồn bản dịch: `assets/vivalarts-vi.json`; chương trình áp dụng: `scripts/vivalarts-translator.js`; build lại bằng `npm run build:vi`. Bản dịch được viết mới, không kèm mã nguồn hoặc hình/âm thanh của game.
+
+## Bản Win32 chạy bằng Boxedwine đã chuẩn bị trước đó
+
 Chơi **Age of Empires: The Rise of Rome đầy đủ** bằng trình duyệt, có giao diện tiếng Việt. Dùng Boxedwine + Wine + WebAssembly, bộ game được đọc ngay trên máy của bạn.
 
-**Trạng thái website công khai:** hiện vẫn yêu cầu chọn gói game của người chơi. Chưa đáp ứng trải nghiệm mở đường link và chơi ngay bản đầy đủ. Bộ mã nguồn có thể tự nạp dữ liệu từ website, nhưng repository chưa kèm dữ liệu thương mại của Rise of Rome để phát hành công khai.
+**Trạng thái bản Boxedwine:** bộ game thương mại vẫn được giữ cục bộ. Website công khai mặc định chuyển sang trang bật tiếng Việt cho Viva La RTS ở trên.
 
 ## Mở chơi
 

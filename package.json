@@ -7,6 +7,7 @@
   "scripts": {
     "setup": "node scripts/fetch-runtime.mjs",
     "start": "node server.mjs",
-    "test": "node tests/player.test.mjs && node tests/trial-saves.test.mjs && node tests/full-package.test.mjs && node tests/prepare-hosted-game.test.mjs"
+    "build:vi": "node scripts/build-vivalarts-vi.mjs",
+    "test": "node tests/player.test.mjs && node tests/trial-saves.test.mjs && node tests/full-package.test.mjs && node tests/prepare-hosted-game.test.mjs && node tests/vivalarts-vi.test.mjs"
   }
 }

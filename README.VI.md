@@ -2,7 +2,7 @@
 
 **Website:** https://tdumii.github.io/aoe-web-browser-vn/
 
-**Website hiện chưa kèm bản đầy đủ để mở link và chơi ngay.** Nó vẫn yêu cầu gói game trên máy. Loader đã hỗ trợ nạp tự động dữ liệu từ hosting, nhưng cần nguồn dữ liệu được phép phân phối công khai; xem [README chính](README.md#nạp-tự-động-từ-website).
+**Cách chơi web hiện tại:** dùng nút dấu trang ở [trang bật tiếng Việt](https://tdumii.github.io/aoe-web-browser-vn/viet-hoa.html) để Việt hóa ngay trong tab AoE trên Viva La RTS. Có 924 mục giao diện được dịch, chưa gồm toàn bộ cốt truyện chiến dịch. Không cần tải ZIP game hoặc chạy máy chủ trên máy. Xem [README chính](README.md#chơi-trên-web-với-tiếng-việt).
 
 **Bản hiện tại dùng Rise of Rome đầy đủ** với gói game/CD trên máy. Mở bằng `choi-aoe.cmd` hoặc đọc [README chính](README.md). Các mục Trial dưới đây ghi lại bản cũ; phần cập nhật đầy đủ nằm cuối tài liệu.
 

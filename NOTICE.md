@@ -60,3 +60,8 @@ or the Boxedwine project.
 - Full game and CD media are supplied locally and excluded from Git and static-site builds. Runtime GPL/LGPL licenses do not license the commercial game content.
 - Local preparation preserves the source game executable bytes and changes only the translation DLL font-name resources to use the OFL UmiVN font already documented above.
 - The Wine overlay uses the supplied CD media through a normal folder/CD-drive mapping and ordinary installation registry paths. No host Windows registry or font installation is performed.
+
+## Personal Vietnamese overlay for Viva La RTS
+- `assets/vivalarts-vi.json` contains newly authored Vietnamese UI translations. `scripts/vivalarts-translator.js` applies them to the user's current `https://vivalarts.com` tab; `assets/vivalarts-vi.user.js` is the generated standalone script.
+- These files contain no copied Viva La RTS game engine, art, sound, maps or server code. They use the original page's loaded public modules in place and the browser's installed Arial fallback for Unicode text.
+- Viva La RTS and the game rights holders do not endorse this personal translation tool. Game availability and behavior remain controlled by the original website.
