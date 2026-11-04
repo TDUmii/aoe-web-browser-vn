@@ -28,6 +28,8 @@ Với hosting giới hạn kích thước từng tệp, có thể chia ZIP thàn
 
 Đây là cấu trúc minh họa, không phải các tệp game đã có trên website. `size` là số byte chính xác của từng phần. URL tương đối giữ đúng đường dẫn GitHub Pages. Loader kiểm tra kích thước, hiển thị phần đang nạp và chỉ bắt đầu giới hạn chờ khởi động Wine sau khi nạp xong dữ liệu. Tổng ZIP tối đa 300 MiB. Nguồn runtime GPL/LGPL không cấp quyền phân phối dữ liệu game thương mại; xem [NOTICE.md](NOTICE.md).
 
+`node scripts/prepare-hosted-game.mjs <source.zip> <output-directory>` tạo các phần 45 MiB và cấu hình tương ứng để kiểm thử việc nạp qua HTTP. Script không tải lên hosting và không sửa cấu hình website hiện tại. Mặc định đầu ra ở `local-game/hosted-game`, được loại khỏi Git. Chỉ phát hành dữ liệu khi có quyền phân phối phù hợp.
+
 Dùng Chrome hoặc Edge trên máy tính, có chuột và bàn phím. Trong game chọn **Chơi đơn → Bản đồ ngẫu nhiên**, chọn số máy rồi bấm **Bắt đầu**. Nên thử 2 người chơi trước trên máy yếu.
 
 Khung game giãn theo cửa sổ và giữ tỷ lệ 4:3. Độ phân giải vẽ của game gốc vẫn là 800 × 600, nên phóng to không tạo sprite HD.
@@ -57,5 +59,7 @@ npm test
 ```
 
 Các kiểm tra bao phủ phát hiện hình ảnh, lỗi khởi động, bộ nhớ XHR nhị phân và nhập/xuất bản lưu với BrowserFS/JSZip thực. Hiệu năng trận dài, máy yếu và chơi mạng chưa được xác nhận. Bản đồ ngẫu nhiên và thao tác đơn vị cần kiểm tra trong trình duyệt thật; emulator báo Running chưa chứng minh game đã lên.
+
+Đã kiểm thử riêng việc trình duyệt tự nạp 6 phần HTTP, vào menu tiếng Việt và tạo trận mới mà không mở bộ chọn tệp. Dữ liệu của phép thử được phục vụ qua tuyến kiểm thử riêng, không được tải lên GitHub Pages. Phép thử không xác nhận rằng website công khai đã kèm bản game đầy đủ. Mô phỏng lỗi tải dữ liệu cũng đã kiểm tra thông báo tiếng Việt và nút tải lại.
 
 Bộ game đầy đủ ở `local-game/` được giữ riêng, không đưa vào Git hoặc gói website tĩnh. Các tệp Trial cũ vẫn được giữ để đối chiếu nhưng không tự chạy. Runtime, nguồn và giấy phép xem [NOTICE.md](NOTICE.md), [LICENSE](LICENSE).

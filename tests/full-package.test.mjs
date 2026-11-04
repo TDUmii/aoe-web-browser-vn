@@ -77,8 +77,31 @@ assert.equal(single.size, 2, 'single hosted archive remains supported');
 await assert.rejects(downloader.download({ gameParts: [{ url: 'assets/one.part', size: 3 }] }), /chưa đủ/);
 await assert.rejects(downloader.download({ gameParts: [{ url: 'assets/one.part', size: 301 * 1024 * 1024 }] }), /300 MB/);
 await assert.rejects(downloader.download({ gameParts: [{ url: 'file:///game.zip' }] }), /Địa chỉ/);
+await assert.rejects(downloader.download({ game: 'assets/one.part', size: 3 }), /Tổng dữ liệu/);
 downloader.fetch = async () => new Response('missing', { status: 404 });
 await assert.rejects(downloader.download({ game: 'assets/missing.part' }), /HTTP 404/);
 const launchBody = source.slice(downloadEnd, source.indexOf('// After an exe is staged', downloadEnd));
 assert.equal(launchBody.includes('AoEPlayer.begin()'), false, 'download must not start the Wine boot watchdog');
 console.log('Hosted download: ordered parts, project paths, size/HTTP errors and boot-watchdog timing passed.');
+
+const elements = Object.fromEntries(['chooseGame', 'welcomeMessage', 'retryGame', 'fullGameZip', 'chooseFullZip']
+  .map(id => [id, { hidden: true, addEventListener() {} }]));
+let releaseManifest, failure;
+const launcher = vm.createContext({
+  TypeError, SITE_BASE: '/aoe/',
+  document: { getElementById: id => elements[id] },
+  window: { AoEPlayer: { idle() {}, fail(message) { failure = message; } } },
+  els: { bootProgress: {}, bootStatus: {} },
+  fetch: () => new Promise(resolve => { releaseManifest = resolve; }),
+  downloadFullArchive: async () => { throw new TypeError('Failed to fetch'); },
+  launchFullArchive: async () => { throw new Error('Must not boot after a failed transfer'); },
+});
+vm.runInContext(launchBody + '\nthis.launch = launchFullGame;', launcher);
+const pendingLaunch = launcher.launch();
+assert.equal(elements.retryGame.hidden, false, 'reload is available while manifest/transfer is pending');
+releaseManifest({ ok: true, json: async () => ({ edition: 'full', game: 'assets/game.zip' }) });
+await pendingLaunch;
+assert.match(failure, /Không tải được dữ liệu từ website/);
+assert.doesNotMatch(failure, /Failed to fetch/, 'network errors must be translated for the player');
+assert.equal(elements.chooseGame.hidden, true, 'hosted network failures must not ask for a local ZIP');
+console.log('Hosted launch: visible reload during download and Vietnamese network recovery passed.');

@@ -965,7 +965,7 @@ async function launchFullArchive(blob) {
   await loadBoxedwineDeps();
   let zip;
   try { zip = new JSZip(await blob.arrayBuffer()); }
-  catch { throw new Error("Không đọc được gói game. Hãy chọn tệp aoe-full.zip đã chuẩn bị đầy đủ."); }
+  catch { throw new Error("Không đọc được dữ liệu game. Hãy thử tải lại hoặc kiểm tra gói game đầy đủ."); }
   let expanded = 0;
   for (const [name, file] of Object.entries(zip.files)) {
     if (file.dir) continue;
@@ -981,7 +981,7 @@ async function launchFullArchive(blob) {
   const expansion = find("userapp/data2/empires.dat");
   const overlay = find("web/wine-overlay.zip");
   if (!exe || !base || !expansion || !overlay) {
-    throw new Error("Gói game chưa có đủ AoE gốc, Rise of Rome hoặc font tiếng Việt. Hãy chọn tệp aoe-full.zip đã chuẩn bị.");
+    throw new Error("Gói game chưa có đủ AoE gốc, Rise of Rome hoặc font tiếng Việt.");
   }
   state.appZipBlob = blob;
   state.fontOverlayBlob = new Blob([zip.files[overlay].asUint8Array()], { type: "application/zip" });
@@ -1034,6 +1034,9 @@ async function downloadFullArchive(config) {
     blobs.push(blob);
     els.bootProgress.value = Math.round((index + 1) / parts.length * 100);
   }
+  if (config.size !== undefined && config.size !== loaded) {
+    throw new Error("Tổng dữ liệu game tải chưa khớp cấu hình. Hãy thử tải lại trang.");
+  }
   return new Blob(blobs, { type: "application/zip" });
 }
 
@@ -1056,18 +1059,27 @@ async function launchFullGame() {
     catch (error) { showChoice(error.message); }
   });
   try {
+    const retry = document.getElementById("retryGame");
+    retry.textContent = "Tải lại trang";
+    retry.hidden = false;
     const reply = await fetch(SITE_BASE + "game-config.json?v=full1", { cache: "no-store" });
     if (!reply.ok) throw new Error("Không đọc được cấu hình game.");
     const config = await reply.json();
     if (config.edition !== "full") {
+      retry.hidden = true;
       showChoice("Chọn gói Đế Chế đầy đủ trên máy để bắt đầu. Không tự mở bản Trial.");
       return;
     }
     // Network transfers can take longer than Wine's boot watchdog.
     if (window.AoEPlayer) window.AoEPlayer.idle();
-    await launchFullArchive(await downloadFullArchive(config));
+    const archive = await downloadFullArchive(config);
+    retry.hidden = true;
+    await launchFullArchive(archive);
   } catch (error) {
-    if (window.AoEPlayer) window.AoEPlayer.fail(error.message);
+    const message = error instanceof TypeError
+      ? "Không tải được dữ liệu từ website. Hãy kiểm tra kết nối mạng rồi tải lại trang."
+      : error.message;
+    if (window.AoEPlayer) window.AoEPlayer.fail(message);
     else showChoice(error.message);
   }
 }
