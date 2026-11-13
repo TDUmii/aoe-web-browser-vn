@@ -1,8 +1,8 @@
-:root { color-scheme: dark; font-family: Tahoma, "Segoe UI", Arial, sans-serif; background: #000; color: #e4d4b8; }
+:root { color-scheme: dark; font-family: "Segoe UI", Tahoma, Arial, sans-serif; background: #000; color: #e4d4b8; }
 * { box-sizing: border-box; }
 html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #000; }
 body { display: flex; align-items: center; justify-content: center; }
-canvas { image-rendering: pixelated; }
+canvas { image-rendering: auto !important; }
 #screen { position: relative; z-index: 1; outline: none; }
 /* The native game is the complete surface; shared catalog tools stay hidden. */
 .w1-switch, .w1-bug, .w1-more-fan, .w1-gamepick { display: none !important; }

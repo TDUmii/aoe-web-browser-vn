@@ -1,5 +1,11 @@
 # Kiểm tra 3.0 - 13/11/2026
 
+## Cập nhật độ rõ chữ 3.0.2
+
+7/7 tests đạt. Ba kiểm tra mới xác nhận viền chữ có mức phủ trung gian, màu đen của bóng chữ là màu đục, phép vẽ sau có thể che chữ, clipping và chế độ đo chữ nhị phân được giữ, và patch từ chối renderer sai phiên bản.
+
+Chrome thực giữ được nhiều giá trị alpha ở giữa 0 và 255 thay vì chỉ mask bật/tắt. Font ghi nhận là Segoe UI 600 16px, 14px, 600 28px và 600 14px. Menu, thiết lập, trận đấu, hộp tạm dừng, lưu trận và viewport 390px được chụp trong `.impeccable/review/readable-3.0.2/`; không ghi nhận page error. Kiểm tra độc lập cho kết quả ship trong phạm vi sửa độ rõ chữ. Bản thử dùng tệp giao diện/renderer ứng viên với tài nguyên game thật từ host công khai, không giả lập gameplay.
+
 ## Cập nhật phông 3.0.1
 
 Đổi font Canvas sang Tahoma trước khi khởi động, gồm cả measureText và fillText qua cùng font native. Chrome thực ghi nhận bold 16px, 13px, bold 28px và bold 13px đều dùng Tahoma; không còn Copperplate trong các nhánh menu/HUD đã kiểm tra. Ảnh menu, thiết lập, trận đấu, menu tạm dừng và viewport 390px đã kiểm tra không phát sinh tràn ngang. 4/4 tests hiện có đạt. Nét chữ vẫn chịu cách raster palette của bộ máy gốc.
