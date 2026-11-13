@@ -1,1117 +1,126 @@
-// WindowsAppPlayer — run user-supplied Windows .exe/.msi files in the browser.
-// 32-bit apps: Boxedwine (Wine 1.7.55 + x86 emulator → WebAssembly).
-// 64-bit apps: Boxedwine64 (Debian wine64, wasm64 pthreads build).
-//
-// Derived from the ExeBrowser glue code (https://github.com/andrewnakas/exebrowser,
-// GPL-2.0), which drives the Boxedwine project's shells. GPL-2.0 applies.
-//
-// Pipeline (32-bit):
-// 1. Load jszip.min.js + browserfs.boxedwine.js from runtime/.
-// 2. Evaluate boxedwine-shell.js + a Config block as ONE inline script (the
-//    shell's `let Config` is block-scoped).
-// 3. Inject boxedwine.js — the Emscripten runtime that fetches boxedwine.wasm.
-// The user's files are zipped in-memory into "userapp.zip" (mounted at D:) and
-// an XHR interceptor feeds that zip to the shell without a network hit.
-//
-// Pipeline (64-bit): the page embeds an iframe to ./64/?chunked=1&p=<prog>.
-// The wine64 runtime there (boxedwine64.js + rootfs parts) runs Debian wine64;
-// user EXEs are staged by writing the file into the running wine's home and
-// calling the launcher's uploadAndRunExe() hook — no reload, the session stays
-// warm. See 64/wine64-launcher.js ( GPL-2.0, exebrowser) for the guest side.
-(() => {
-"use strict";
+const game = document.querySelector('#game');
+const player = document.querySelector('#player');
+const statusText = document.querySelector('#status-text');
+const help = document.querySelector('#help');
+const reloadDialog = document.querySelector('#reload-dialog');
+let pageStatus = 'Đang mở Viva La RTS...';
+let loadTimer;
+const projectRoot = new URL('./', document.currentScript.src);
 
-// ─── runtime paths (same-origin, downloaded by scripts/fetch-runtime.mjs) ──
-// Site-relative so the app works both at a domain root (local server) and in
-// a sub-path (GitHub Pages serves project sites at /<repo>/).
-const SITE_BASE = location.pathname.endsWith("/")
-  ? location.pathname
-  : location.pathname.replace(/[^/]*$/, "");
-const RUNTIME_BASE = SITE_BASE + "runtime/";
-const FS_BASE = SITE_BASE + "fs/";
-const ROOT_ZIP = "fullWine1.7.55-v8";
-const OVERLAY_ZIP = "wine1.7.55-v8-min-online";
-const VIRTUAL_APP_ZIP = "userapp.zip";
-const isAoePlayer = Boolean(document.body.dataset.aoeAuto);
-
-const els = {
-  dropzone: document.getElementById("appDropzone"),
-  exeInput: document.getElementById("exeInput"),
-  folderInput: document.getElementById("folderInput"),
-  zipInput: document.getElementById("zipInput"),
-  pickBtn: document.getElementById("pickBtn"),
-  pickFolderBtn: document.getElementById("pickFolderBtn"),
-  pickZipBtn: document.getElementById("pickZipBtn"),
-  entryPickerWrap: document.getElementById("entryPickerWrap"),
-  entryPicker: document.getElementById("entryPicker"),
-  fileInfo: document.getElementById("fileInfo"),
-  runBtn: document.getElementById("runBtn"),
-  demoBtn: document.getElementById("demoBtn"),
-  saveStateBtn: document.getElementById("saveStateBtn"),
-  stopBtn: document.getElementById("stopBtn"),
-  arch32: document.getElementById("arch32"),
-  arch64: document.getElementById("arch64"),
-  bootStatus: document.getElementById("bootStatus"),
-  bootProgress: document.getElementById("bootProgress"),
-  logOutput: document.getElementById("logOutput"),
-  canvas: document.getElementById("canvas"),
-  screenContainer: document.getElementById("screen-container"),
-  frameWrap: document.getElementById("frame-wrap"),
-  appFrame: document.getElementById("appFrame"),
-};
-
-const state = {
-  depsLoaded: false,
-  stagedFiles: [],
-  candidateExes: [],
-  pickedExe: null,
-  appZipBlob: null,
-  bootInFlight: false,
-  booted: false,
-  arch: "32", // "32" | "64"
-  frameReady: false,
-  prepackaged: false,
-  fontOverlayBlob: null,
-  cdMounted: false,
-};
-
-// ─── helpers ────────────────────────────────────────────────────────────
-function log(msg, level = "info") {
-  const ts = new Date().toLocaleTimeString();
-  const prefix = level === "error" ? "[!]" : level === "warn" ? "[~]" : "[·]";
-  els.logOutput.textContent += `${ts} ${prefix} ${msg}\n`;
-  els.logOutput.scrollTop = els.logOutput.scrollHeight;
-  if (isAoePlayer && /err:module:LdrInitializeThunk.*failed/i.test(msg) && window.AoEPlayer) {
-    window.AoEPlayer.fail("Game chưa khởi động được vì thiếu thành phần tương thích. Hãy kiểm tra bộ chạy game.");
-  }
-}
-function setStatus(text) {
-  els.bootStatus.textContent = text;
-  if (window.AoEPlayer) window.AoEPlayer.onStatus(text);
-  if (isAoePlayer) {
-    const translations = {
-      "Loading Boxedwine runtime…": "Đang tải bộ chạy game...",
-      "Configuring Wine launch…": "Đang chuẩn bị môi trường game...",
-      "Starting emulator…": "Đang khởi động bộ giả lập...",
-    };
-    if (translations[text]) els.bootStatus.textContent = translations[text];
-  }
-}
-window.__wapLog = log;
-window.__wapStatus = setStatus;
-
-function formatBytes(n) {
-  if (n < 1024) return `${n} B`;
-  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
-  return `${(n / 1024 / 1024).toFixed(2)} MB`;
+function renderStatus() {
+  statusText.textContent = navigator.onLine ? pageStatus : 'Bạn đang ngoại tuyến. Kiểm tra kết nối mạng; trận game sẽ không tự tải lại.';
+  document.querySelector('#status').classList.toggle('notice', !navigator.onLine || pageStatus.includes('lâu'));
 }
 
-function loadScript(src) {
-  return new Promise((resolve, reject) => {
-    const s = document.createElement("script");
-    s.src = src;
-    s.async = false;
-    s.onload = () => resolve();
-    s.onerror = () => reject(new Error(`Failed to load ${src}`));
-    document.head.appendChild(s);
-  });
+function startLoadTimer() {
+  clearTimeout(loadTimer);
+  pageStatus = 'Đang mở Viva La RTS...';
+  renderStatus();
+  loadTimer = setTimeout(() => {
+    pageStatus = 'Game đang mở lâu hơn dự kiến. Bạn có thể thử Mở tab riêng.';
+    renderStatus();
+  }, 25000);
 }
 
-async function fetchText(url) {
-  const r = await fetch(url);
-  if (!r.ok) throw new Error(`HTTP ${r.status} fetching ${url}`);
-  return await r.text();
-}
+game.addEventListener('load', () => {
+  if (!game.hasAttribute('src')) return;
+  clearTimeout(loadTimer);
+  pageStatus = 'Chọn Age of Empires để bắt đầu. Nếu khung trống, thử Mở tab riêng.';
+  renderStatus();
+});
+window.addEventListener('offline', renderStatus);
+window.addEventListener('online', renderStatus);
 
-// Boxedwine's shell queries several DOM ids our minimal page doesn't have.
-// Checkbox stubs MUST be real <input type="checkbox"> nodes so .checked reads work.
-function ensureShellDomStubs() {
-  const stubs = [
-    ["status", "div"], ["progress", "progress"], ["spinner", "div"],
-    ["output", "pre"],
-    ["startbtn", "button"], ["uploadbtn", "button"], ["downloadbtn", "button"],
-    ["inline-runbtn", "button"], ["inline", "div"], ["run-inline", "button"],
-    ["loading", "div"],
-    ["showConsole", "input", { type: "checkbox", checked: false }],
-    ["sound-checkbox", "input", { type: "checkbox" }],
-    ["soundToggle", "input", { type: "checkbox", checked: true }],
-    ["message", "div"], ["modalLink", "a"], ["modalLinkExe", "a"],
-    ["openModalExeClick", "button"], ["tree", "div"], ["items", "div"],
-    ["selectedItem", "div"], ["loadStatus", "div"],
-    ["dropzone", "div"],
-  ];
-  for (const [id, tag, attrs] of stubs) {
-    if (!document.getElementById(id)) {
-      const el = document.createElement(tag);
-      el.id = id;
-      if (attrs) for (const [k, v] of Object.entries(attrs)) el[k] = v;
-      el.style.display = "none";
-      document.body.appendChild(el);
-    }
-  }
-}
-
-// ─── XHR interception (feed the in-memory app zip to the shell) ─────────
-function installXhrInterceptor() {
-  if (installXhrInterceptor.done) return;
-  installXhrInterceptor.done = true;
-  const NativeXHR = window.XMLHttpRequest;
-  const origOpen = NativeXHR.prototype.open;
-  const origSend = NativeXHR.prototype.send;
-  const origSetRequestHeader = NativeXHR.prototype.setRequestHeader;
-
-  NativeXHR.prototype.open = function (method, url, async, user, pass) {
-    let u = String(url);
-    // The Boxedwine ondemand filesystem hardcodes "/api/fs/" as the prefix for
-    // root-zip chunk fetches. A static host (GitHub Pages) has no such route,
-    // so rewrite it to the same-origin fs/ directory that holds the zips.
-    if (u.startsWith("/api/fs/")) u = FS_BASE + u.slice("/api/fs/".length);
-    // The bundled Vietnamese game uses a verified font-mapped Wine overlay.
-    // Keep the default original overlay for the manual launcher.
-    if (isAoePlayer && u.includes("wine1.7.55-v8-min-online.zip")) {
-      if (state.fontOverlayBlob) this.__wap_overlay = true;
-      else u = SITE_BASE + "assets/vn-wine-overlay.css?v=umi3";
-    }
-    // IDM browser integration can intercept .zip XHR responses (204); serve Wine archives via a neutral suffix.
-    if (location.hostname === "127.0.0.1" || location.hostname === "localhost") {
-      u = u.replace("wine1.7.55-v8-min-online.zip", "wine1.7.55-v8-min-online.asset")
-           .replace("fullWine1.7.55-v8.zip", "fullWine1.7.55-v8.asset");
-    }
-    this.__wap_url = u;
-    return origOpen.call(this, method, u, async !== false, user, pass);
-  };
-  NativeXHR.prototype.setRequestHeader = function (k, v) {
-    if (this.__wap_overlay || (this.__wap_url && this.__wap_url.includes(VIRTUAL_APP_ZIP))) {
-      this.__wap_headers = this.__wap_headers || {};
-      this.__wap_headers[k.toLowerCase()] = v;
-      return;
-    }
-    return origSetRequestHeader.call(this, k, v);
-  };
-  NativeXHR.prototype.send = function (body) {
-    const url = this.__wap_url || "";
-    if (!this.__wap_overlay && !url.includes(VIRTUAL_APP_ZIP)) return origSend.call(this, body);
-    const localBlob = this.__wap_overlay ? state.fontOverlayBlob : state.appZipBlob;
-    if (!localBlob) {
-      log("Internal: XHR for user app zip but no blob ready.", "error");
-      this.readyState = 4; this.status = 500;
-      this.onreadystatechange && this.onreadystatechange();
-      return;
-    }
-    const xhr = this;
-    const reader = new FileReader();
-    const headers = xhr.__wap_headers || {};
-    const m = headers["range"] && /bytes=(\d+)-(\d+)?/.exec(headers["range"]);
-    const start = m ? Number(m[1]) : 0;
-    const end = m ? (m[2] ? Math.min(Number(m[2])+1, localBlob.size) : localBlob.size) : localBlob.size;
-    const chunk = m ? localBlob.slice(start, end) : localBlob;
-    reader.onload = () => {
-      const responseBytes = new Uint8Array(reader.result);
-      const status = m ? 206 : 200;
-      Object.defineProperty(xhr, "readyState", { value: 4, writable: true });
-      Object.defineProperty(xhr, "status", { value: status, writable: true });
-      if (xhr.responseType !== "arraybuffer") {
-        const parts = [];
-        for (let i = 0; i < responseBytes.length; i += 32768) {
-          parts.push(String.fromCharCode.apply(null, responseBytes.subarray(i, i + 32768)));
+async function openGame() {
+  // Earlier emulator workers added isolation headers that can block this iframe.
+  // Match this project's two exact script URLs; leave other sites and saves alone.
+  const obsoleteWorkers = new Set([
+    new URL('coi-serviceworker.js', projectRoot).href,
+    new URL('64/coi-serviceworker.js', projectRoot).href,
+  ]);
+  try {
+    if ('serviceWorker' in navigator) {
+      const controlledByOldWorker = obsoleteWorkers.has(navigator.serviceWorker.controller?.scriptURL);
+      let removed = false;
+      for (const registration of await navigator.serviceWorker.getRegistrations()) {
+        if ([registration.active, registration.waiting, registration.installing].some(worker => obsoleteWorkers.has(worker?.scriptURL))) {
+          removed = (await registration.unregister()) || removed;
         }
-        Object.defineProperty(xhr, "responseText", { value: parts.join(""), writable: true });
       }
-      Object.defineProperty(xhr, "response", { value: responseBytes.buffer, writable: true });
-      xhr.getResponseHeader = function (name) {
-        if (name.toLowerCase() === "content-length") return String(localBlob.size);
-        return null;
-      };
-      if (xhr.onreadystatechange) xhr.onreadystatechange();
-      if (xhr.onload) xhr.onload();
-    };
-    reader.readAsArrayBuffer(chunk);
-  };
-}
-
-// ─── 32-bit shell bootstrap ─────────────────────────────────────────────
-async function loadBoxedwineDeps() {
-  if (state.depsLoaded) return;
-  setStatus("Loading Boxedwine runtime…");
-  els.bootProgress.hidden = false;
-  els.bootProgress.value = 10;
-  await loadScript(RUNTIME_BASE + "jszip.min.js");
-  els.bootProgress.value = 30;
-  await loadScript(RUNTIME_BASE + "browserfs.boxedwine.js");
-  els.bootProgress.value = 45;
-  ensureShellDomStubs();
-  state.depsLoaded = true;
-  log("Runtime dependencies loaded.");
-}
-
-async function runShellWithConfig() {
-  setStatus("Configuring Wine launch…");
-  els.bootProgress.value = 55;
-  const shellSrc = await fetchText(RUNTIME_BASE + "boxedwine-shell.js");
-
-  const exeName = state.pickedExe.path.replace(/\//g, "\\");
-  // NOTE: the shell's getParameter() does plain string splitting and never
-  // URL-decodes, so p/root/app values must be passed raw.
-  const urlParams = [
-    "ondemand=root",
-    "root=" + ROOT_ZIP,
-    "inline-default-ondemand-root-overlay=" + OVERLAY_ZIP,
-    "app=" + VIRTUAL_APP_ZIP.replace(/\.zip$/, ""),
-    "p=" + "d:\\userapp\\" + exeName,
-    "auto=true",
-    "sound=true",
-    "bpp=32",
-  ].join("&");
-
-  const configCode = `
-Config.isRunningInline = true;
-Config.locateRootBaseUrl = ${JSON.stringify(FS_BASE)};
-Config.locateAppBaseUrl = ${JSON.stringify(FS_BASE)};
-Config.locateOverlayBaseUrl = ${JSON.stringify(FS_BASE)};
-Config.urlParams = ${JSON.stringify(urlParams)};
-var __origPreRun = Module.preRun ? Module.preRun.slice() : [];
-Module.canvas = document.getElementById("canvas");
-Module.print = function (t) { window.__wapLog(String(t)); };
-Module.printErr = function (t) { window.__wapLog(String(t), "warn"); };
-Module.setStatus = function (t) { if (t) window.__wapStatus(t); };
-Module.postMainLoop = function () { if (window.AoEPlayer) window.AoEPlayer.onFrame(); };
-Module.onAbort = function () { if (window.AoEPlayer) window.AoEPlayer.fail("Bộ giả lập đã dừng do lỗi. Hãy thử tải lại."); };
-Module.locateFile = function (path) { return ${JSON.stringify(RUNTIME_BASE)} + path; };
-window.__BoxedwineConfig = Config;
-window.__BoxedwineModule = Module;
-${document.body.dataset.aoeAuto === "full" ? `var __aoeParams = getEmulatorParams; getEmulatorParams = function () {
-  var args = __aoeParams();
-  ${state.cdMounted ? 'args.splice(args.indexOf("/bin/wine"), 0, "-mount", "/root/files/cdrom", "/mnt/cdrom");' : ''}
-  return args.concat(["nostartup"]);
-};` : ''}
-`;
-  await runInlineScript(shellSrc + "\n;\n" + configCode);
-  if (!window.__BoxedwineConfig) {
-    throw new Error("Combined shell+config script failed to expose Config.");
-  }
-  log(`Wine 32-bit shell configured (program=${state.pickedExe.path}).`);
-}
-
-function runInlineScript(code) {
-  return new Promise((resolve, reject) => {
-    const s = document.createElement("script");
-    s.textContent = code;
-    s.onerror = () => reject(new Error("inline script error"));
-    try {
-      document.head.appendChild(s);
-      resolve();
-    } catch (e) {
-      reject(e);
-    }
-  });
-}
-
-async function startEmulator() {
-  setStatus("Starting emulator…");
-  els.bootProgress.value = 80;
-  await loadScript(RUNTIME_BASE + "boxedwine.js");
-  els.bootProgress.value = 100;
-  els.bootProgress.hidden = true;
-  installAudioReviver();
-}
-
-// Chrome blocks AudioContext until a user gesture; Boxedwine creates one
-// inside SDL_OpenAudio and never resumes it. Poll and resume on any gesture.
-function installAudioReviver() {
-  let resumed = false;
-  const tryResume = () => {
-    const ctx = window.Module && window.Module.SDL2 && window.Module.SDL2.audioContext;
-    if (!ctx) return false;
-    if (ctx.state === "suspended") {
-      ctx.resume().then(
-        () => log("AudioContext resumed."),
-        (e) => log("AudioContext resume failed: " + e, "warn")
-      );
-    }
-    resumed = true;
-    return true;
-  };
-  const start = Date.now();
-  const poll = setInterval(() => {
-    if (resumed || Date.now() - start > 30000) clearInterval(poll);
-    else tryResume();
-  }, 250);
-  window.addEventListener("click", tryResume, { capture: true });
-  window.addEventListener("keydown", tryResume, { capture: true });
-}
-
-// ─── staging user files ────────────────────────────────────────────────
-function clearStaged() {
-  state.stagedFiles = [];
-  state.candidateExes = [];
-  state.pickedExe = null;
-  els.entryPickerWrap.hidden = true;
-  els.entryPicker.innerHTML = "";
-  els.fileInfo.textContent = "";
-  els.runBtn.disabled = true;
-}
-
-function refreshEntryPicker() {
-  state.candidateExes = state.stagedFiles
-    .filter((f) => /\.(exe|bat|msi)$/i.test(f.path))
-    .sort((a, b) => {
-      const rank = (p) => (/\.exe$/i.test(p) ? 0 : /\.msi$/i.test(p) ? 1 : 2);
-      return rank(a.path) - rank(b.path) || a.path.localeCompare(b.path);
-    });
-  if (state.candidateExes.length === 0) {
-    els.entryPickerWrap.hidden = true;
-    els.runBtn.disabled = true;
-    state.pickedExe = null;
-    log("No .exe, .msi or .bat found in the supplied files.", "warn");
-    setStatus("No runnable program found — try a .exe, or a folder/zip that contains one.");
-    return;
-  }
-  if (state.candidateExes.length === 1) {
-    els.entryPickerWrap.hidden = true;
-    setEntry(state.candidateExes[0]);
-    return;
-  }
-  els.entryPicker.innerHTML = "";
-  for (const f of state.candidateExes) {
-    const opt = document.createElement("option");
-    opt.value = f.path;
-    opt.textContent = `${f.path} (${formatBytes(f.bytes.length)})`;
-    els.entryPicker.appendChild(opt);
-  }
-  els.entryPickerWrap.hidden = false;
-  const preferred = state.candidateExes.find(f => /(^|\/)(EMPIRESX|EMPIRES)\.EXE$/i.test(f.path));
-  els.entryPicker.value = (preferred || state.candidateExes[0]).path;
-  setEntry(preferred || state.candidateExes[0]);
-}
-
-function setEntry(stagedFile) {
-  const baseName = stagedFile.path.split("/").pop();
-  state.pickedExe = {
-    path: stagedFile.path,
-    name: baseName,
-    originalName: baseName,
-    bytes: stagedFile.bytes,
-  };
-  const totalSize = state.stagedFiles.reduce((n, f) => n + f.bytes.length, 0);
-  const suffix = state.stagedFiles.length > 1
-    ? ` · ${state.stagedFiles.length} files, ${formatBytes(totalSize)} total`
-    : "";
-  const archLabel = state.arch === "64" ? "64-bit wine" : "32-bit Wine";
-  els.fileInfo.textContent = `Entry: ${stagedFile.path} (${archLabel})${suffix}`;
-  els.runBtn.disabled = false;
-  setStatus(`Ready: ${baseName}. Click Run.`);
-}
-
-function warnIfNotPe(path, bytes) {
-  if (bytes.length < 64 || bytes[0] !== 0x4d || bytes[1] !== 0x5a) {
-    log(`Warning: ${path} doesn't start with PE 'MZ' magic — it may not run.`, "warn");
-  }
-}
-
-// Smell-test the PE header: a 64-bit (PE32+) binary can't run on the 32-bit
-// engine, and 64-bit users should know before a baffling boot.
-function peArch(bytes) {
-  if (bytes.length < 0x40 || bytes[0] !== 0x4d || bytes[1] !== 0x5a) return null;
-  try {
-    const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-    const peOff = view.getUint32(0x3c, true);
-    if (peOff + 6 > bytes.length) return null;
-    const magic = view.getUint16(peOff + 0x18, true); // PE32=0x10b, PE32+=0x20b
-    if (magic === 0x20b) return "64";
-    if (magic === 0x10b) return "32";
-  } catch (e) { /* fall through */ }
-  return null;
-}
-
-function isMsiEntry(f) { return /\.msi$/i.test(f.path); }
-
-async function handleSingleExe(file) {
-  if (!file) return;
-  clearStaged();
-  const bytes = new Uint8Array(await file.arrayBuffer());
-  const safe = sanitizeExeName(file.name);
-  warnIfNotPe(file.name, bytes);
-  state.stagedFiles.push({ path: safe, bytes });
-  log(`Loaded ${file.name} → ${safe} (${formatBytes(file.size)}).`);
-  refreshEntryPicker();
-}
-
-function sanitizeExeName(name) {
-  let base = name.replace(/^.*[\\/]/, "").replace(/\.(exe|msi)$/i, "");
-  base = base.replace(/[^A-Za-z0-9_]/g, "_").toUpperCase();
-  if (base.length === 0) base = "USERAPP";
-  if (base.length > 8) base = base.slice(0, 8);
-  return base + ".EXE";
-}
-
-function sanitizeRelPath(rel) {
-  const parts = rel.split(/[\\/]+/).filter((s) => s && s !== "." && s !== "..");
-  if (parts.length === 0) return null;
-  const out = parts.map((seg, i) => {
-    const isLast = i === parts.length - 1;
-    if (isLast && /\.(exe|msi)$/i.test(seg)) {
-      return /\.msi$/i.test(seg)
-        ? seg.replace(/[^A-Za-z0-9_.]/g, "_").toUpperCase()
-        : sanitizeExeName(seg);
-    }
-    let s = seg.replace(/[^A-Za-z0-9_.()\- ]/g, "_");
-    if (s.length === 0) s = "_";
-    return s.toUpperCase();
-  });
-  return out.join("/");
-}
-
-async function handleFolder(fileList) {
-  if (!fileList || fileList.length === 0) return;
-  clearStaged();
-  const files = Array.from(fileList);
-  const firstSlash = (p) => p.indexOf("/");
-  const topLevel = files
-    .map((f) => f.webkitRelativePath || f.name)
-    .map((p) => (firstSlash(p) >= 0 ? p.slice(0, firstSlash(p)) : ""))
-    .filter(Boolean);
-  const allSameTop = topLevel.length > 0 && topLevel.every((t) => t === topLevel[0]);
-  for (const f of files) {
-    const raw = f.webkitRelativePath || f.name;
-    const stripped = allSameTop ? raw.slice(topLevel[0].length + 1) : raw;
-    if (!stripped) continue;
-    const safe = sanitizeRelPath(stripped);
-    if (!safe) continue;
-    const bytes = new Uint8Array(await f.arrayBuffer());
-    if (/\.exe$/i.test(safe)) warnIfNotPe(safe, bytes);
-    state.stagedFiles.push({ path: safe, bytes });
-  }
-  log(`Loaded folder: ${state.stagedFiles.length} files staged.`);
-  refreshEntryPicker();
-}
-
-async function handleZip(file) {
-  if (!file) return;
-  if (typeof JSZip === "undefined") {
-    try {
-      setStatus("Đang nạp bộ đọc ZIP...");
-      await loadScript(RUNTIME_BASE + "jszip.min.js");
-    } catch (error) {
-      log(`ZIP load failed: ${error.message}`, "error");
-      return;
-    }
-  }
-  clearStaged();
-  const buf = await file.arrayBuffer();
-  await stageFromZipBuffer(buf, file.name);
-}
-
-async function stageFromZipBuffer(buf, label) {
-  const zip = new JSZip(buf); // JSZip 2.x: sync constructor
-  for (const name of Object.keys(zip.files)) {
-    const obj = zip.files[name];
-    if (obj.dir) continue;
-    const safe = sanitizeRelPath(name);
-    if (!safe) continue;
-    const bytes = obj.asUint8Array();
-    if (/\.exe$/i.test(safe)) warnIfNotPe(safe, bytes);
-    state.stagedFiles.push({ path: safe, bytes });
-  }
-  log(`Loaded ${label}: ${state.stagedFiles.length} files staged.`);
-  refreshEntryPicker();
-}
-
-// ─── demo app (7-Zip, license-clean) ────────────────────────────────────
-async function runDemo() {
-  if (state.booted) {
-    log("An app is already running. Reload the page (F5) first.", "warn");
-    return;
-  }
-  try {
-    els.demoBtn.disabled = true;
-    setStatus("Fetching demo app…");
-    await loadBoxedwineDeps(); // JSZip must exist before we stage the zip
-    const r = await fetch(SITE_BASE + "demo/7-zip.zip");
-    if (!r.ok) throw new Error(`HTTP ${r.status} fetching demo`);
-    const buf = await r.arrayBuffer();
-    clearStaged(); // don't mix the demo with whatever the user dropped earlier
-    await stageFromZipBuffer(buf, "7-Zip demo");
-    // Prefer the GUI file manager over the console binary so the demo shows
-    // a visible window instead of help text on the log.
-    const fm = state.candidateExes.find((f) => /7ZFM\.EXE$/i.test(f.path));
-    if (fm) setEntry(fm);
-    log("Demo staged. Launching…");
-    await bootAndRun();
-  } catch (err) {
-    log("Demo failed: " + err.message, "error");
-    setStatus("Demo failed — see console.");
-  } finally {
-    els.demoBtn.disabled = false;
-  }
-}
-
-// ─── packaging + boot (32-bit) ──────────────────────────────────────────
-async function buildAppZip() {
-  if (typeof JSZip === "undefined") throw new Error("JSZip not loaded.");
-  if (state.stagedFiles.length === 0 || !state.pickedExe) throw new Error("No files staged.");
-
-  // The shell derives the working dir from the app zip basename (sans .zip):
-  // userapp.zip → /root/files/userapp → drive D:\userapp.
-  const zip = new JSZip();
-  const ROOT = "userapp/";
-  for (const f of state.stagedFiles) {
-    zip.file(ROOT + f.path, f.bytes);
-  }
-  const entry = state.stagedFiles.find((f) => f.path === state.pickedExe.path);
-  if (entry && isMsiEntry(entry)) {
-    const msiName = entry.path.split("/").pop();
-    const bat =
-      "@echo off\r\n" +
-      "msiexec /i \"d:\\userapp\\" + msiName.replace(/\//g, "\\") + "\"\r\n";
-    zip.file(ROOT + "RUN.MSI.BAT", bat);
-    log(`MSI entry: generated RUN.MSI.BAT → msiexec /i ${msiName}`);
-  }
-  const bytes = zip.generate({ type: "uint8array", compression: "STORE" });
-  state.appZipBlob = new Blob([bytes], { type: "application/zip" });
-  log(`Packaged ${state.stagedFiles.length} file(s) into virtual app zip (${formatBytes(state.appZipBlob.size)}).`);
-}
-
-async function bootAndRun() {
-  if (state.bootInFlight) return;
-  if (state.booted) {
-    log("An app is already running. Reload the page (F5) to run a different one.", "warn");
-    setStatus("Already running — reload the page to switch apps.");
-    return;
-  }
-  if (!state.pickedExe) {
-    log("Pick an app first.", "error");
-    return;
-  }
-  if (state.arch === "64") {
-    await bootAndRun64();
-    return;
-  }
-
-  state.bootInFlight = true;
-  els.runBtn.disabled = true;
-  try {
-    installXhrInterceptor();
-    await loadBoxedwineDeps();
-    if (!(state.prepackaged && state.appZipBlob)) {
-      await buildAppZip();
-    }
-    await runShellWithConfig();
-    els.screenContainer.classList.add("has-content");
-    await startEmulator();
-    state.booted = true;
-    state.bootInFlight = false;
-    els.saveStateBtn.disabled = false;
-    els.stopBtn.disabled = false;
-    setStatus(`Running ${state.pickedExe.originalName}… (32-bit)`);
-    log("Launch dispatched. The app window will appear when Wine is ready.");
-  } catch (err) {
-    log("Boot failed: " + err.message, "error");
-    setStatus("Boot failed — see console log.");
-    els.runBtn.disabled = false;
-    state.bootInFlight = false;
-  }
-}
-
-// ─── 64-bit boot: drive the Boxedwine64 page in an iframe ──────────────
-// First boot downloads the rootfs parts (~205 MB raw, less over the wire);
-// after that the wine session stays warm in the frame and new apps spawn
-// into it with no reload.
-//
-// Sequencing matters: the frame must boot WITH a program (?p=notepad.exe) —
-// that mounts the pre-booted prefix, brings up the wineserver session, and
-// pins it persistent. Booting the frame bare (no ?p) mounts no prefix and no
-// session, and a later launchApp() would fall back to a full page reload,
-// wiping anything we staged. Notepad is the warm-up app: once the session is
-// ready we stage the user's files and spawn their app into the live kernel
-// (the launcher's spawnIntoSession kills Notepad and adopts the new window).
-const WARMUP_PROG = "notepad.exe";
-
-function ensureFrame64() {
-  return new Promise((resolve, reject) => {
-    if (state.frameReady) return resolve();
-    if (!els.appFrame.getAttribute("src")) {
-      els.appFrame.src = `${SITE_BASE}64/?chunked=1&p=${encodeURIComponent(WARMUP_PROG)}&gltrace=0`;
-    }
-    let waited = 0;
-    const iv = setInterval(() => {
-      const w = els.appFrame.contentWindow;
-      if (w && typeof w.uploadAndRunExe === "function" && typeof w.launchApp === "function") {
-        clearInterval(iv);
-        state.frameReady = true;
-        resolve();
-      } else if ((waited += 500) > 60000) {
-        clearInterval(iv);
-        reject(new Error("64-bit runtime page did not load (is 64/ deployed alongside this page?)"));
-      }
-    }, 500);
-  });
-}
-
-// Wait until the frame's Emscripten runtime is up (Module.FS exists) and the
-// wine session is ready (bw64_session_ready() === 1). First boot includes a
-// ~205 MB rootfs download plus a slow emulated wineboot — hence the long cap.
-function waitRuntime64(w, timeoutMs = 8 * 60 * 1000) {
-  return new Promise((resolve, reject) => {
-    let waited = 0;
-    const step = 500;
-    (function poll() {
-      const M = w.Module;
-      const fsUp = M && M.FS && typeof M.FS.writeFile === "function";
-      let session = false;
-      if (fsUp && typeof M.ccall === "function") {
-        try { session = M.ccall("bw64_session_ready", "number", [], []) === 1; } catch (e) {}
-      }
-      if (fsUp && session) return resolve();
-      waited += step;
-      if (waited > timeoutMs) {
-        return reject(new Error("wine64 session did not become ready (first boot downloads ~205 MB and boots slowly; retry once it settles)"));
-      }
-      if (waited % 15000 === 0) {
-        setStatus(`Booting wine64… (${Math.round(waited / 1000)}s — first boot fetches the rootfs once)`);
-      }
-      setTimeout(poll, step);
-    })();
-  });
-}
-
-// Write one file into the running wine64 session and register it in Boxedwine's
-// VFS — same mechanics as the launcher's own uploadAndRunExe, minus auto-launch.
-// Path conventions (from wine64-launcher.js): the Emscripten FS root is /root
-// (HOME_IN_MEMFS = ROOT + "/home/username"), but bw64_register_file and the
-// launch prog use GUEST paths ("/home/username/…" ↔ "Z:\home\username\…").
-function putFile64(w, name, bytes) {
-  const FS = w.Module.FS;
-  const fsDest = "/root/home/username/userapp/" + name;
-  const guestPath = "/home/username/userapp/" + name;
-  const parts = fsDest.split("/").filter(Boolean);
-  let p = "";
-  for (const part of parts.slice(0, -1)) {
-    p += "/" + part;
-    try { FS.mkdir(p); } catch (e) { /* EEXIST */ }
-  }
-  try { FS.unlink(fsDest); } catch (e) { /* not there yet */ }
-  FS.writeFile(fsDest, bytes);
-  // The prefix dir was scanned (and cached) at boot; raw MEMFS writes are
-  // invisible to the guest path resolver until registered.
-  try {
-    w.Module.ccall("bw64_register_file", "number", ["string"], [guestPath]);
-  } catch (e) {
-    log(`VFS registration failed for ${name}: ${e}`, "warn");
-  }
-}
-
-async function bootAndRun64() {
-  state.bootInFlight = true;
-  els.runBtn.disabled = true;
-  try {
-    if (isMsiEntry(state.pickedExe)) {
-      // The 64-bit runtime stages plain files; msiexec needs the .bat launcher
-      // flow, which only the 32-bit shell drives today.
-      log("MSI files run on the 32-bit engine. Switching to 32-bit and booting there.", "warn");
-      state.arch = "32";
-      els.arch32.checked = true;
-      els.arch64.checked = false;
-      setArch("32");
-      state.bootInFlight = false;
-      return bootAndRun();
-    }
-
-    setStatus("Booting wine64 (first boot downloads the rootfs — progress shows in the frame)…");
-    await ensureFrame64();
-    const w = els.appFrame.contentWindow;
-    await waitRuntime64(w);
-
-    // Stage EVERY staged file so sibling DLLs/assets ride along, then spawn
-    // the entry exe into the warm session (this replaces the Notepad warm-up).
-    const entryName = state.pickedExe.path;
-    log(`Staging ${state.stagedFiles.length} file(s) into the wine64 session…`);
-    for (const f of state.stagedFiles) {
-      putFile64(w, f.path, f.bytes);
-    }
-    const runProg = "Z:\\home\\username\\userapp\\" + entryName.replace(/\//g, "\\");
-    log(`Launching ${runProg} under wine64.`);
-    w.launchApp(runProg);
-    els.screenContainer.classList.add("has-content");
-    state.booted = true;
-    state.bootInFlight = false;
-    els.stopBtn.disabled = false;
-    setStatus(`Running ${state.pickedExe.originalName}… (wine64)`);
-  } catch (err) {
-    log("64-bit boot failed: " + err.message, "error");
-    setStatus("64-bit boot failed — see console log.");
-    els.runBtn.disabled = false;
-    state.bootInFlight = false;
-  }
-}
-
-// ─── export what the app wrote (32-bit writable overlay delta) ─────────
-function getWritableLayers() {
-  const BFS = window.BrowserFS;
-  if (!BFS) throw new Error("BrowserFS not initialized — run an app first.");
-  const fs = BFS.BFSRequire("fs");
-  const root = fs.getRootFS && fs.getRootFS();
-  if (!root || !root.mntMap) throw new Error("BrowserFS root not mounted.");
-  const cfg = window.__BoxedwineConfig || {};
-  const homeMount = (cfg.appDirPrefix || "").replace(/\/$/, "");
-  const out = [];
-  for (const [mount, ov] of Object.entries(root.mntMap)) {
-    if (mount !== "/root/base" && mount !== homeMount) continue;
-    if (ov && typeof ov.getOverlayedFileSystems === "function") {
-      const { writable } = ov.getOverlayedFileSystems();
-      if (writable) out.push({ mount, writable });
-    }
-  }
-  if (out.length === 0) throw new Error("No overlay layers found.");
-  return out;
-}
-
-function collectWritableFiles(layer, mount = "", dir = "/") {
-  const out = [];
-  let entries;
-  try { entries = layer.readdirSync(dir); } catch { return out; }
-  const rootFs = mount ? window.BrowserFS.BFSRequire("fs") : null;
-  for (const name of entries) {
-    const full = dir === "/" ? "/" + name : dir + "/" + name;
-    if (full === "/.deletedFiles.log") continue;
-    let stat;
-    try { stat = layer.statSync(full); } catch { continue; }
-    if (stat.isDirectory()) {
-      out.push(...collectWritableFiles(layer, mount, full));
-    } else if (stat.isFile()) {
-      let buf;
-      try {
-        buf = rootFs ? rootFs.readFileSync(mount + full) : layer.readFileSync(full);
-      } catch { continue; }
-      out.push({ path: full.replace(/^\//, ""), bytes: buf });
-    }
-  }
-  return out;
-}
-
-async function downloadWritableLayer() {
-  try {
-    if (state.arch === "64" && els.appFrame.contentWindow && els.appFrame.contentWindow.downloadSavedFiles) {
-      els.appFrame.contentWindow.downloadSavedFiles();
-      log("Export requested in the wine64 session.");
-      return;
-    }
-    const layers = getWritableLayers();
-    const zip = new JSZip();
-    let totalBytes = 0, totalFiles = 0;
-    for (const { mount, writable } of layers) {
-      const files = collectWritableFiles(writable, mount);
-      const folder = mount === "/root/base" ? "system" : "appdir";
-      for (const f of files) {
-        const bytes = f.bytes.buffer
-          ? new Uint8Array(f.bytes.buffer, f.bytes.byteOffset, f.bytes.byteLength)
-          : new Uint8Array(f.bytes);
-        zip.file(`${folder}/${f.path}`, bytes);
-        totalBytes += bytes.length;
-        totalFiles++;
+      if (controlledByOldWorker && removed) {
+        pageStatus = 'Đang chuyển từ trình chơi cũ sang bản mới...';
+        renderStatus();
+        location.reload();
+        return;
       }
     }
-    if (totalFiles === 0) {
-      log("Nothing was written yet — the app hasn't saved any files.", "warn");
-      return;
-    }
-    const zipBytes = zip.generate({ type: "uint8array", compression: "DEFLATE" });
-    const blob = new Blob([zipBytes], { type: "application/zip" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    const ts = new Date().toISOString().replace(/[:.]/g, "-").replace("T", "_").slice(0, 19);
-    a.href = url;
-    a.download = `windowsappplayer-output-${ts}.zip`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 60000);
-    log(`Exported ${totalFiles} file(s), ${formatBytes(totalBytes)} → your downloads.`);
-  } catch (err) {
-    log("Export failed: " + err.message, "error");
+  } catch {
+    // Storage-restricted browsers can still try the game or open its own tab.
   }
+  startLoadTimer();
+  game.src = game.dataset.src;
 }
+openGame();
 
-// ─── arch switching + stop ──────────────────────────────────────────────
-function setArch(arch) {
-  if (state.booted || state.bootInFlight) {
-    log("Lock the architecture before running an app (reload to change).", "warn");
-    // revert the toggle
-    if (arch === "32") els.arch64.checked = true; else els.arch32.checked = true;
-    return;
-  }
-  state.arch = arch;
-  if (arch === "64") {
-    els.appFrame.style.display = "";
-    els.frameWrap.classList.add("active");
-    els.canvas.style.display = "none";
-    setStatus("64-bit mode: wine64 loads on first Run (~205 MB rootfs, cached after).");
-    log("Switched to 64-bit (wine64) engine.");
-  } else {
-    els.appFrame.style.display = "none";
-    els.frameWrap.classList.remove("active");
-    els.canvas.style.display = "";
-    setStatus("32-bit mode: classic Wine 1.7.55 engine.");
-    log("Switched to 32-bit (Wine 1.7.55) engine.");
-  }
-}
-
-function stopApp() {
-  if (state.arch === "64") {
-    // The 64-bit engine has no in-page teardown that survives (non-MODULARIZE
-    // build); a frame reload is the honest stop.
-    els.appFrame.src = `${SITE_BASE}64/?chunked=1`;
-    state.frameReady = false;
-    state.booted = false;
-    log("wine64 session reset (frame reloaded).");
-    return;
-  }
-  // 32-bit: the emulator can't re-init in-page; reload is the reliable stop.
-  location.reload();
-}
-
-// ─── wiring ─────────────────────────────────────────────────────────────
-els.pickBtn.addEventListener("click", (e) => { e.stopPropagation(); els.exeInput.click(); });
-els.pickFolderBtn.addEventListener("click", (e) => { e.stopPropagation(); els.folderInput.click(); });
-els.pickZipBtn.addEventListener("click", (e) => { e.stopPropagation(); els.zipInput.click(); });
-els.exeInput.addEventListener("change", (e) => handleSingleExe(e.target.files[0]));
-els.folderInput.addEventListener("change", (e) => handleFolder(e.target.files));
-els.zipInput.addEventListener("change", (e) => handleZip(e.target.files[0]));
-els.entryPicker.addEventListener("change", (e) => {
-  const f = state.candidateExes.find((c) => c.path === e.target.value);
-  if (f) setEntry(f);
+document.querySelector('#help-open').addEventListener('click', () => help.showModal());
+document.querySelector('#quick-help').addEventListener('click', () => help.showModal());
+document.querySelector('#help-close').addEventListener('click', () => help.close());
+document.querySelector('#reload').addEventListener('click', () => {
+  reloadDialog.returnValue = 'cancel';
+  reloadDialog.showModal();
 });
-els.runBtn.addEventListener("click", bootAndRun);
-els.demoBtn.addEventListener("click", runDemo);
-els.saveStateBtn.addEventListener("click", downloadWritableLayer);
-els.stopBtn.addEventListener("click", stopApp);
-els.arch32.addEventListener("change", () => els.arch32.checked && setArch("32"));
-els.arch64.addEventListener("change", () => els.arch64.checked && setArch("64"));
-
-els.dropzone.addEventListener("click", () => els.exeInput.click());
-els.dropzone.addEventListener("keydown", (e) => {
-  if (e.key === "Enter" || e.key === " ") { e.preventDefault(); els.exeInput.click(); }
-});
-els.dropzone.addEventListener("dragover", (e) => {
-  e.preventDefault();
-  els.dropzone.classList.add("hover");
-});
-els.dropzone.addEventListener("dragleave", () => els.dropzone.classList.remove("hover"));
-els.dropzone.addEventListener("drop", async (e) => {
-  e.preventDefault();
-  els.dropzone.classList.remove("hover");
-  const files = Array.from(e.dataTransfer.files || []);
-  if (files.length === 0) return;
-  if (files.length === 1 && /\.(exe|msi)$/i.test(files[0].name)) {
-    handleSingleExe(files[0]);
-  } else if (files.length === 1 && /\.zip$/i.test(files[0].name)) {
-    handleZip(files[0]);
-  } else {
-    clearStaged();
-    for (const f of files) {
-      const safe = sanitizeRelPath(f.name);
-      if (!safe) continue;
-      const bytes = new Uint8Array(await f.arrayBuffer());
-      if (/\.exe$/i.test(safe)) warnIfNotPe(safe, bytes);
-      state.stagedFiles.push({ path: safe, bytes });
-    }
-    log(`Dropped ${state.stagedFiles.length} file(s) (flat).`);
-    refreshEntryPicker();
-  }
+reloadDialog.addEventListener('close', () => {
+  if (reloadDialog.returnValue !== 'reload') return;
+  startLoadTimer();
+  game.src = 'https://vivalarts.com/';
 });
 
-// Public noncommercial AOE 1997 Trial: all original demo files + EULA bundled.
-// This is the original demo, not the complete Rise of Rome expansion.
-async function launchBundledTrial() {
-  const intro = document.getElementById("welcomeMessage");
+const fullscreenButton = document.querySelector('#fullscreen');
+fullscreenButton.addEventListener('click', async () => {
+  if (!document.fullscreenEnabled || !player.requestFullscreen) {
+    pageStatus = 'Trình duyệt này chưa hỗ trợ toàn màn hình. Bạn có thể thử Mở tab riêng.';
+    renderStatus();
+    return;
+  }
   try {
-    setStatus("Đang tải Đế Chế Việt hóa...");
-    // Parallelize runtime startup and the compact pre-packaged game download.
-    // Let the browser's HTTP cache handle re-use; avoid a half-written CacheStorage entry.
-    const gamePromise = fetch(SITE_BASE + "demo/aoe-vn-trial.css?v=vn4")
-      .then(async response => {
-        if (!response.ok) throw new Error("HTTP " + response.status + " downloading AOE VN");
-        const data = await response.blob();
-        if (data.size < 20_000_000) throw new Error("Tệp AOE tải thiếu dữ liệu (" + data.size + " bytes)");
-        const magic = new Uint8Array(await data.slice(0, 4).arrayBuffer());
-        if (magic[0] !== 0x50 || magic[1] !== 0x4b)
-          throw new Error("Tệp dữ liệu game không phải ZIP hợp lệ");
-        return data;
-      });
-    await loadBoxedwineDeps();
-    state.appZipBlob = await gamePromise; // Already rooted as userapp/ and compressed on the server.
-    state.prepackaged = true;
-    state.pickedExe = {
-      name: "EMPIRES.EXE", originalName: "EMPIRES.EXE", path: "EMPIRES.EXE",
-      bytes: new Uint8Array(),
-    };
-    state.arch = "32";
-    log("AOE VN ready: compressed ZIP loaded directly (" + formatBytes(state.appZipBlob.size) + ").");
-    setStatus("Đang khởi động Đế Chế...");
-    if (intro) intro.textContent = "Đang mở game...";
-    await bootAndRun();
-  } catch (err) {
-    log("AOE startup failed: " + err.message, "error");
-    setStatus("Không thể mở Đế Chế: " + err.message);
-    if (intro) intro.textContent = "Không tải được game. Hãy tải lại trang.";
-    const retry = document.getElementById("retryGame");
-    if (retry) retry.hidden = false;
+    if (document.fullscreenElement) await document.exitFullscreen();
+    else await player.requestFullscreen();
+  } catch {
+    pageStatus = 'Chưa mở được toàn màn hình. Hãy thử lại hoặc dùng Mở tab riêng.';
+    renderStatus();
   }
+});
+document.addEventListener('fullscreenchange', () => {
+  const active = document.fullscreenElement === player;
+  document.querySelector('#fullscreen-label').textContent = active ? 'Thoát toàn màn hình' : 'Toàn màn hình';
+  fullscreenButton.setAttribute('aria-pressed', String(active));
+});
+
+const terms = [
+  ['Single Player', 'Chơi một người'], ['Multiplayer', 'Chơi nhiều người'],
+  ['Campaign', 'Chiến dịch'], ['Scenario', 'Kịch bản'], ['Random Map', 'Bản đồ ngẫu nhiên'],
+  ['Civilization', 'Nền văn minh'], ['Difficulty', 'Độ khó'], ['Population', 'Dân số'],
+  ['Villager', 'Dân làng'], ['Town Center', 'Nhà chính'], ['House', 'Nhà dân'],
+  ['Barracks', 'Nhà lính'], ['Food', 'Thực phẩm'], ['Wood', 'Gỗ'], ['Gold', 'Vàng'],
+  ['Stone', 'Đá'], ['Research', 'Nghiên cứu'], ['Diplomacy', 'Ngoại giao'],
+  ['Save Game', 'Lưu trận'], ['Load Game', 'Mở trận đã lưu'],
+];
+const normalize = text => text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd');
+const termList = document.querySelector('#terms');
+const search = document.querySelector('#term-search');
+function renderTerms() {
+  const query = normalize(search.value.trim());
+  const matches = terms.filter(pair => normalize(pair.join(' ')).includes(query));
+  termList.replaceChildren(...matches.map(([english, vietnamese]) => {
+    const row = document.createElement('div');
+    const term = document.createElement('dt');
+    const definition = document.createElement('dd');
+    term.textContent = english;
+    definition.textContent = vietnamese;
+    row.append(term, definition);
+    return row;
+  }));
+  document.querySelector('#no-terms').hidden = matches.length > 0;
 }
-
-// Hosted packages and local files share the same archive validation and boot path.
-async function launchFullArchive(blob) {
-  if (state.bootInFlight || state.booted) return;
-  if (blob.size > 300 * 1024 * 1024) throw new Error("Gói game vượt giới hạn 300 MB.");
-  await loadBoxedwineDeps();
-  let zip;
-  try { zip = new JSZip(await blob.arrayBuffer()); }
-  catch { throw new Error("Không đọc được dữ liệu game. Hãy thử tải lại hoặc kiểm tra gói game đầy đủ."); }
-  let expanded = 0;
-  for (const [name, file] of Object.entries(zip.files)) {
-    if (file.dir) continue;
-    if (!/^(userapp|web|cdrom)\//i.test(name) || name.includes("\\") || /[\x00-\x1f:]/.test(name) || name.split("/").some(part => part === "." || part === "..")) {
-      throw new Error("Gói game chứa đường dẫn không hợp lệ.");
-    }
-    expanded += file._data?.uncompressedSize || 0;
-    if (expanded > 800 * 1024 * 1024) throw new Error("Dữ liệu game sau giải nén vượt giới hạn 800 MB.");
-  }
-  const find = name => Object.keys(zip.files).find(path => path.toLowerCase() === name.toLowerCase());
-  const exe = find("userapp/empiresx.exe");
-  const base = find("userapp/empires.exe");
-  const expansion = find("userapp/data2/empires.dat");
-  const overlay = find("web/wine-overlay.zip");
-  if (!exe || !base || !expansion || !overlay) {
-    throw new Error("Gói game chưa có đủ AoE gốc, Rise of Rome hoặc font tiếng Việt.");
-  }
-  state.appZipBlob = blob;
-  state.fontOverlayBlob = new Blob([zip.files[overlay].asUint8Array()], { type: "application/zip" });
-  state.prepackaged = true;
-  state.cdMounted = Boolean(find("cdrom/.windows-label"));
-  state.arch = "32";
-  state.pickedExe = { path: exe.slice("userapp/".length), name: "Empiresx.exe", originalName: "Empiresx.exe", bytes: new Uint8Array() };
-  const chooser = document.getElementById("chooseGame");
-  if (chooser) chooser.hidden = true;
-  if (window.AoEPlayer) window.AoEPlayer.begin();
-  setStatus("Đang khởi động Đế Chế - Rise of Rome...");
-  await bootAndRun();
-}
-
-async function downloadFullArchive(config) {
-  const limit = 300 * 1024 * 1024;
-  const parts = config.gameParts || [{ url: config.game }];
-  if (!Array.isArray(parts) || !parts.length || parts.length > 32) {
-    throw new Error("Cấu hình dữ liệu game trên website không hợp lệ.");
-  }
-  const urls = parts.map(part => {
-    if (!part || typeof part.url !== "string" || !part.url ||
-        (part.size !== undefined && (!Number.isSafeInteger(part.size) || part.size <= 0))) {
-      throw new Error("Cấu hình tệp game trên website không hợp lệ.");
-    }
-    const url = new URL(part.url, location.href);
-    if (!/^https?:$/.test(url.protocol)) throw new Error("Địa chỉ dữ liệu game không hợp lệ.");
-    return url;
-  });
-  const declared = parts.reduce((sum, part) => sum + (part.size || 0), 0);
-  if (declared > limit) throw new Error("Gói game vượt giới hạn 300 MB.");
-  const blobs = [];
-  let loaded = 0;
-  els.bootProgress.hidden = false;
-  els.bootProgress.max = 100;
-  els.bootProgress.value = 0;
-  for (let index = 0; index < parts.length; index++) {
-    setStatus(`Đang nạp dữ liệu game từ website: phần ${index + 1}/${parts.length} (${formatBytes(loaded)} đã nạp)...`);
-    const response = await fetch(urls[index]);
-    if (!response.ok) throw new Error(`Không tải được dữ liệu game (HTTP ${response.status}). Hãy thử tải lại trang.`);
-    if (Number(response.headers.get("content-length")) > limit - loaded) {
-      throw new Error("Gói game vượt giới hạn 300 MB.");
-    }
-    const blob = await response.blob();
-    loaded += blob.size;
-    if (loaded > limit) throw new Error("Gói game vượt giới hạn 300 MB.");
-    if (!blob.size || (parts[index].size !== undefined && blob.size !== parts[index].size)) {
-      throw new Error("Dữ liệu game tải chưa đủ. Hãy thử tải lại trang.");
-    }
-    blobs.push(blob);
-    els.bootProgress.value = Math.round((index + 1) / parts.length * 100);
-  }
-  if (config.size !== undefined && config.size !== loaded) {
-    throw new Error("Tổng dữ liệu game tải chưa khớp cấu hình. Hãy thử tải lại trang.");
-  }
-  return new Blob(blobs, { type: "application/zip" });
-}
-
-async function launchFullGame() {
-  const chooser = document.getElementById("chooseGame");
-  const intro = document.getElementById("welcomeMessage");
-  const showChoice = message => {
-    if (window.AoEPlayer) window.AoEPlayer.idle();
-    if (chooser) chooser.hidden = false;
-    if (intro) intro.textContent = "Chơi Đế Chế - Rise of Rome đầy đủ";
-    els.bootProgress.hidden = true;
-    els.bootStatus.textContent = message;
-  };
-  const input = document.getElementById("fullGameZip");
-  document.getElementById("chooseFullZip").addEventListener("click", () => input.click());
-  input.addEventListener("change", async () => {
-    const file = input.files[0]; input.value = "";
-    if (!file) return;
-    try { await launchFullArchive(file); }
-    catch (error) { showChoice(error.message); }
-  });
-  try {
-    const retry = document.getElementById("retryGame");
-    retry.textContent = "Tải lại trang";
-    retry.hidden = false;
-    const reply = await fetch(SITE_BASE + "game-config.json?v=full1", { cache: "no-store" });
-    if (!reply.ok) throw new Error("Không đọc được cấu hình game.");
-    const config = await reply.json();
-    if (config.edition === "translation") {
-      location.replace(SITE_BASE + "viet-hoa.html");
-      return;
-    }
-    if (config.edition !== "full") {
-      retry.hidden = true;
-      showChoice("Chọn gói Đế Chế đầy đủ trên máy để bắt đầu. Không tự mở bản Trial.");
-      return;
-    }
-    // Network transfers can take longer than Wine's boot watchdog.
-    if (window.AoEPlayer) window.AoEPlayer.idle();
-    const archive = await downloadFullArchive(config);
-    retry.hidden = true;
-    await launchFullArchive(archive);
-  } catch (error) {
-    const message = error instanceof TypeError
-      ? "Không tải được dữ liệu từ website. Hãy kiểm tra kết nối mạng rồi tải lại trang."
-      : error.message;
-    if (window.AoEPlayer) window.AoEPlayer.fail(message);
-    else showChoice(error.message);
-  }
-}
-
-// After an exe is staged, sniff its PE header: on 64-bit mode a 32-bit-only
-// exe can't run (and vice versa) — flip the toggle automatically so the user
-// doesn't have to know what they're holding.
-const _origSetEntry = setEntry;
-setEntry = function (stagedFile) {
-  const arch = peArch(stagedFile.bytes);
-  if (arch && !state.booted && !state.bootInFlight && state.arch !== arch) {
-    log(`PE header says this is a ${arch}-bit binary — switching engine automatically.`);
-    state.arch = arch;
-    els.arch32.checked = arch === "32";
-    els.arch64.checked = arch === "64";
-    setArch(arch);
-  }
-  _origSetEntry(stagedFile);
-};
-
-// keep the canvas focusable so the app can take keyboard input
-els.canvas.tabIndex = 0;
-
-log("WindowsAppPlayer ready. Drop a .exe/.msi, or click 'Try demo (7-Zip)'.");
-log("Modern/64-bit apps: flip the wine64 toggle — first boot fetches its rootfs once.");
-if (document.body.dataset.aoeAuto === "trial") {
-  void launchBundledTrial();
-} else if (document.body.dataset.aoeAuto === "full") {
-  void launchFullGame();
-}
-})();
+search.addEventListener('input', renderTerms);
+renderTerms();

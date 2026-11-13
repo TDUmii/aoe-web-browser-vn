@@ -1,105 +1,46 @@
 <!doctype html>
 <html lang="vi">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#000000">
-<meta name="description" content="Chơi Đế Chế - Rise of Rome đầy đủ với tiếng Việt trong trình duyệt. Dành cho máy tính có chuột và bàn phím.">
-<title>Đế Chế Web VN - Rise of Rome</title>
-<link rel="icon" href="./favicon.svg" type="image/svg+xml">
-<style>
-:root{color-scheme:dark}
-*{box-sizing:border-box}
-html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#000}
-body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
-#screen-container{position:absolute;inset:0 0 68px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#000}
-#canvas{display:block;width:min(100vw,calc((100dvh - 68px) * 4 / 3));height:auto;aspect-ratio:4/3;max-width:100%;max-height:100%;object-fit:contain;image-rendering:auto;outline:none}
-#frame-wrap,#appFrame{display:none!important}
-#overlay{position:fixed;inset:0;z-index:5;background:#000;display:grid;place-items:center;transition:opacity .4s}
-#overlay.is-hidden{opacity:0;pointer-events:none;visibility:hidden}
-#loading{width:min(310px,85vw);text-align:center;color:#d7d0bc}
-#loading .mark{font:700 36px Georgia,serif;letter-spacing:.05em;color:#dec184}
-#loading p{font:14px/1.7 system-ui,sans-serif;white-space:normal;color:#c1bdaf;margin:16px 0 12px}
-#bootStatus{font:14px/1.5 system-ui,sans-serif;color:#9b9e95;margin-top:11px}
-#bootProgress{display:block;width:100%;height:3px;accent-color:#cdb16e}
-#chooseFullZip{min-height:44px;margin-top:16px;padding:12px 16px;background:#d1b67b;color:#15140e;border:0;border-radius:6px;font:700 16px system-ui;cursor:pointer}
-#retryGame{background:#d1b67b;border:0;border-radius:7px;padding:9px 15px;color:#15140e;font-weight:700;cursor:pointer;margin-top:16px}
-#playerTools{position:fixed;bottom:0;left:0;right:0;z-index:7;min-height:60px;padding:8px 16px;display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;background:#10100f;border-top:1px solid #393227}
-#playerTools button,dialog button{min-height:44px;border:1px solid #776647;background:#201e18;color:#f3e3c4;border-radius:6px;padding:8px 12px;font:600 14px system-ui;cursor:pointer}
-#playerTools button:hover,dialog button:hover{background:#3c3425}
-#playerTools button:disabled{opacity:.45;cursor:wait}
-button:focus-visible{outline:2px solid #f1ce88;outline-offset:3px}
-#saveMessage{position:fixed;bottom:68px;left:50%;transform:translateX(-50%);z-index:8;max-width:min(640px,95vw);padding:8px 12px;background:#201e18;color:#f3e3c4;font:14px/1.5 system-ui;text-align:center}
-#saveMessage:empty{display:none}
-#edition{position:fixed;top:8px;left:12px;z-index:6;font:12px system-ui;color:#c6bda9;margin:0}
-dialog{width:min(560px,calc(100vw - 24px));max-height:85dvh;overflow:auto;padding:24px;border:1px solid #776647;border-radius:12px;background:#181711;color:#f1e4cb;font:16px/1.6 system-ui}
-dialog::backdrop{background:#000c}
-dialog h1{font:700 26px Georgia,serif;margin:0 0 16px;color:#e6c486}
-dialog p{margin:12px 0}
-dialog li{margin:8px 0}
-dialog form{text-align:right;margin-top:20px}
-@media(max-width:600px){#screen-container{bottom:112px}#canvas{width:min(100vw,calc((100dvh - 112px) * 4 / 3))}#playerTools{padding:8px;gap:6px}#playerTools button{font-size:13px;padding:8px 10px}#saveMessage{bottom:112px}}
-#info{font-size:14px;color:#aab6a6;margin-top:8px;line-height:1.5}
-[hidden],.hidden-controls{display:none!important}
-#debug{display:none;position:fixed;bottom:0;left:0;right:0;max-height:35vh;overflow:auto;padding:10px;background:#121212ed;color:#aee2ad;z-index:6;white-space:pre-wrap;font:11px Consolas,monospace}
-body.debug #debug{display:block}
-@media(prefers-reduced-motion:reduce){#overlay{transition:none}}
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#181a19">
+  <meta name="description" content="Chơi Viva La RTS trong trình duyệt với hướng dẫn và bảng thuật ngữ tiếng Việt.">
+  <title>Đế Chế Web</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css?v=2.0.0">
+  <script src="app.js?v=2.0.0" defer></script>
 </head>
-<body data-aoe-auto="full">
-<div id="screen-container">
-  <canvas id="canvas" tabindex="0" aria-label="Age of Empires Việt hóa" title="Nhấn để điều khiển"></canvas>
-  <div id="frame-wrap"><iframe id="appFrame" title="Bộ giả lập"></iframe></div>
-</div>
-<div id="overlay" role="status" aria-live="polite">
-  <div id="loading">
-    <div class="mark">ĐẾ CHẾ</div>
-    <p id="welcomeMessage">Đang chuẩn bị Đế Chế - Rise of Rome...</p>
-    <progress id="bootProgress" max="100" value="1"></progress>
-    <div id="bootStatus">Đang chuẩn bị...</div>
-    <button id="retryGame" type="button" hidden>Khởi động lại game</button>
-    <div id="chooseGame" hidden>
-      <button id="chooseFullZip" type="button">Chọn gói game đầy đủ (.zip)</button>
-      <input id="fullGameZip" type="file" accept=".zip,application/zip" hidden>
-      <p>Bộ game đã chuẩn bị trên máy có tên <strong>aoe-full.zip</strong>. Tệp được đọc ngay trong trình duyệt của bạn.</p>
-    </div>
-    <div id="info">Dành cho máy tính có chuột và bàn phím. Vào Chơi đơn → Bản đồ ngẫu nhiên để chơi với máy.</div>
-  </div>
-</div>
-<div class="hidden-controls" aria-hidden="true">
-  <div id="appDropzone"></div>
-  <input type="file" id="exeInput"><input type="file" id="folderInput"><input type="file" id="zipInput">
-  <button id="pickBtn"></button><button id="pickFolderBtn"></button><button id="pickZipBtn"></button>
-  <div id="entryPickerWrap"><select id="entryPicker"></select></div>
-  <div id="fileInfo"></div><button id="runBtn"></button><button id="demoBtn"></button>
-  <button id="saveStateBtn"></button><button id="stopBtn"></button>
-  <input type="radio" id="arch32" checked><input type="radio" id="arch64">
-</div>
-<p id="edition">Đế Chế · Rise of Rome · Tiếng Việt</p>
-<nav id="playerTools" aria-label="Điều khiển trình chơi">
-  <button id="fullscreenGame" type="button">Toàn màn hình</button>
-  <button id="exportSaves" type="button" disabled>Xuất bản lưu</button>
-  <button id="importSaves" type="button" disabled>Nhập bản lưu</button>
-  <button id="helpGame" type="button">Cách chơi</button>
-  <button id="recovery" type="button">Tải lại game</button>
-</nav>
-<input id="saveImport" type="file" accept=".zip,application/zip" hidden>
-<p id="saveMessage" role="status" aria-live="polite"></p>
-<dialog id="gameHelp" aria-labelledby="helpTitle">
-  <h1 id="helpTitle">Chơi Đế Chế trong trình duyệt</h1>
-  <p>Trình chơi hỗ trợ <strong>Age of Empires: The Rise of Rome đầy đủ</strong> cùng bộ Việt hóa. Bộ game và font được nạp trong trình duyệt.</p>
-  <ol>
-    <li>Chọn <strong>Chơi đơn → Bản đồ ngẫu nhiên</strong> để tạo trận với máy, hoặc <strong>Chiến dịch</strong> để chơi nhiệm vụ. Nhập tên người chơi nếu được hỏi.</li>
-    <li>Nhấp chuột trái để chọn quân, chuột phải để di chuyển hoặc giao việc. Kéo chuột trái để chọn nhiều quân. Đưa chuột tới mép bản đồ để cuộn. Bấm Menu ở góc trên phải để mở các lệnh trong trận.</li>
-    <li>Muốn chơi tiếp lần sau: <strong>lưu ván trong menu game trước</strong>, sau đó bấm <strong>Xuất bản lưu</strong> để tải tệp ZIP về máy.</li>
-    <li>Lần sau, bấm <strong>Nhập bản lưu</strong> ở menu chính, chọn ZIP đã xuất rồi vào <strong>Chơi đơn → Tải ván chơi</strong>. Tải lại hoặc đóng trang sẽ xóa dữ liệu chưa xuất.</li>
-  </ol>
-  <p>Chưa hỗ trợ chơi online nhiều người. Nên dùng Chrome hoặc Edge trên máy tính, có chuột và bàn phím. Nhấp vào game để trình duyệt cho phép phát âm thanh.</p>
-  <form method="dialog"><button>Quay lại game</button></form>
-</dialog>
-<div id="debug"><div id="logOutput"></div></div>
-<script src="./player.js?v=20261104full1"></script>
-<script src="./trial-saves.js?v=20261104full1"></script>
-<script src="./app.js?v=20261104vi1"></script>
+<body>
+  <main class="player" id="player">
+    <header class="toolbar">
+      <div class="brand"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M5 27V14h5V9h4V4h4v5h4v5h5v13M3 27h26M13 27v-8h6v8M7 17h2m14 0h2"/></svg><span>Đế Chế <b>Web</b><small>VIVA LA RTS</small></span></div>
+      <nav class="actions" aria-label="Điều khiển trang game">
+        <button id="help-open" type="button" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 2-2.5 2-2.5 4m0 3v1"/></svg> Hướng dẫn</button>
+        <button id="reload" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5M5 8a8 8 0 0 1 14-2l1 2M4 16l1 2a8 8 0 0 0 14-2"/></svg> Tải lại</button>
+        <button id="fullscreen" type="button" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5m6 0h5v5M4 15v5h5m6 0h5v-5"/></svg> <span id="fullscreen-label">Toàn màn hình</span></button>
+        <a class="external" href="https://vivalarts.com/" target="_blank" rel="noopener noreferrer">Mở tab riêng <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 16 19 5M10 5h9v9M5 5H4v15h15v-1"/></svg></a>
+      </nav>
+    </header>
+    <section class="game-area" aria-label="Viva La RTS">
+      <iframe id="game" data-src="https://vivalarts.com/" title="Viva La RTS - chọn Age of Empires để chơi" allow="autoplay; fullscreen" sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock allow-popups allow-popups-to-escape-sandbox allow-modals" allowfullscreen></iframe>
+    </section>
+    <footer class="statusbar">
+      <p id="status" role="status" aria-live="polite"><span class="status-dot" aria-hidden="true"></span><span id="status-text">Đang mở Viva La RTS...</span></p>
+      <button class="start-tip" id="quick-help" type="button">Lần đầu chơi? <span>Age of Empires → Single Player</span> <span aria-hidden="true">↗</span></button>
+    </footer>
+    <p class="mobile-tip">Để dễ thao tác, hãy xoay ngang màn hình và dùng chuột, bàn phím nếu có.</p>
+    <dialog id="help" aria-labelledby="help-title">
+      <div class="drawer-heading"><h1 id="help-title">Bắt đầu một đế chế.</h1><button id="help-close" class="close" type="button" aria-label="Đóng hướng dẫn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button></div>
+      <div class="drawer-content">
+        <p class="intro">Chọn game trong Viva La RTS, rồi bắt đầu trận đấu của bạn.</p>
+        <ol class="steps"><li><strong>Chọn Age of Empires</strong><p>Trong trang game, chọn <b>Age of Empires</b>. Trang này không tự chọn game giúp bạn.</p></li><li><strong>Chọn Single Player</strong><p>Đây là chế độ chơi một người. Làm theo các lựa chọn trong game để tạo trận.</p></li><li><strong>Làm quen từng bước</strong><p>Ưu tiên phần hướng dẫn nếu có. Dùng chuột và bàn phím để chọn, di chuyển và ra lệnh cho đơn vị.</p></li></ol>
+        <details open><summary>Ngôn ngữ & dữ liệu lưu</summary><p>Phần hướng dẫn ở đây bằng tiếng Việt; menu và nội dung trong game có thể vẫn bằng tiếng Anh.</p><p>Trận đã lưu phụ thuộc Viva La RTS và trình duyệt. Dữ liệu khi chơi tại đây và khi mở tab riêng có thể khác nhau. Hãy lưu trong game trước khi tải lại trang hoặc chuyển sang tab riêng.</p></details>
+        <details><summary>Khi game mở chậm</summary><p>Chờ thêm một chút và kiểm tra kết nối mạng. Nếu khung game vẫn trống hoặc không thao tác được, thử <a href="https://vivalarts.com/" target="_blank" rel="noopener noreferrer">mở Viva La RTS ở tab riêng ↗</a>.</p><p>Nút Tải lại sẽ hỏi trước khi mở lại game. Kết nối mạng trở lại không tự tải lại trận của bạn.</p></details>
+        <section class="glossary" aria-labelledby="glossary-title"><div class="section-heading"><h2 id="glossary-title">Đọc menu dễ hơn</h2><span>20 thuật ngữ</span></div><label for="term-search">Tìm từ tiếng Anh hoặc tiếng Việt</label><input id="term-search" type="search" placeholder="Ví dụ: villager, thực phẩm..." autocomplete="off"><dl id="terms"></dl><p id="no-terms" hidden>Chưa có từ phù hợp. Thử một từ khác nhé.</p></section>
+        <p class="drawer-foot">Game được cung cấp bởi Viva La RTS.</p>
+      </div>
+    </dialog>
+    <dialog id="reload-dialog" class="confirm" aria-labelledby="reload-title"><h2 id="reload-title">Tải lại game?</h2><p>Tiến trình chưa lưu có thể bị mất. Hãy lưu trong game trước khi tiếp tục.</p><form method="dialog"><button value="cancel" autofocus>Quay lại</button><button value="reload" class="primary">Tải lại game</button></form></dialog>
+  </main>
 </body>
 </html>

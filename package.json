@@ -1,13 +1,11 @@
 {
-  "name": "aoe-web-vn-launcher",
-  "version": "1.0.0",
-  "description": "Vietnamese browser launcher for user-provided Age of Empires game files via Boxedwine",
+  "name": "de-che-web",
+  "version": "2.0.0",
   "private": true,
   "type": "module",
+  "description": "Viva La RTS embedded player with Vietnamese support",
   "scripts": {
-    "setup": "node scripts/fetch-runtime.mjs",
     "start": "node server.mjs",
-    "build:vi": "node scripts/build-vivalarts-vi.mjs",
-    "test": "node tests/player.test.mjs && node tests/trial-saves.test.mjs && node tests/full-package.test.mjs && node tests/prepare-hosted-game.test.mjs && node tests/vivalarts-vi.test.mjs"
+    "test": "node --test tests/site.test.mjs"
   }
 }

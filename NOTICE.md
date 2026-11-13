@@ -1,67 +1,9 @@
-# NOTICE — provenance and licenses
+# Nguồn và quyền sử dụng
 
-WindowsAppPlayer runs Windows applications in the browser by packaging three
-open-source projects:
+Đế Chế Web là giao diện hỗ trợ tiếng Việt cho người chơi Viva La RTS. Game được tải từ https://vivalarts.com/ trong khung trình duyệt hoặc mở trực tiếp ở tab riêng. Dự án không liên kết hay được bảo trợ bởi Viva La RTS hoặc nhà phát hành Age of Empires.
 
-## Boxedwine — GPL-2.0
-- Project: https://www.boxedwine.org/ · Source: https://github.com/danoon2/Boxedwine
-- Files: `runtime/boxedwine.wasm`, `runtime/boxedwine.js`,
-  `runtime/boxedwine-shell.js`, `runtime/browserfs.boxedwine.js`
-- These are the Emscripten/WASM build of Boxedwine (x86 CPU interpreter +
-  fake Linux kernel), as packaged by the exebrowser project. The
-  `browserfs.boxedwine.js` file is BrowserFS with exebrowser's patch keeping
-  on-demand root-zip fetches on same-origin paths.
+Mã nguồn hiện tại không kèm engine game, EXE, DLL, bộ giả lập, hình ảnh, âm thanh hay bản đồ của AOE. Không có proxy dùng để sao chép hoặc sửa nội dung máy chủ Viva La RTS. Thanh điều khiển, hướng dẫn và thuật ngữ tiếng Việt được viết cho giao diện này.
 
-## Wine 1.7.55 — LGPL-2.1
-- Project: https://www.winehq.org/
-- Files: `fs/fullWine1.7.55-v8` (root filesystem zip, range-fetched),
-  `fs/wine1.7.55-v8-min-online.zip` (overlay with an audio-driver registry
-  selection so apps can use the emulated OSS sound card). Both are Boxedwine's
-  Wine filesystem zips; the overlay is the upstream file with one registry key
-  (`Software\\Wine\\Drivers` → `Audio=oss`) documented at
-  https://github.com/andrewnakas/exebrowser/blob/main/public/boxedwine/apps/NOTICE.md
+Viva La RTS công bố đây là dự án người hâm mộ phi thương mại và nội dung game thuộc các chủ sở hữu tương ứng. Xem https://vivalarts.com/legal/index.html. Chưa tìm thấy giấy phép cho phép dự án này sao chép hoặc tự host toàn bộ engine và tài nguyên của họ.
 
-## exebrowser glue — GPL-2.0
-- Source: https://github.com/andrewnakas/exebrowser (© Andrew Nakas)
-- `app.js` in this project is adapted from its `public/app.js` (user-file
-  staging, virtual app zip + XHR interception, shell/Config injection,
-  writable-layer export), reworked for a single Wine variant and local serving.
-- `LICENSE` in this directory is the GPL-2.0 text applicable to this derived
-  combination.
-
-## JSZip — MIT
-- File: `runtime/jszip.min.js` (bundled with Boxedwine's web build).
-
-## Demo app — 7-Zip 9.20 (LGPL-2.1 + BSD)
-- File: `demo/7-zip.zip`, unmodified, from exebrowser's license-clean app
-  collection. https://www.7-zip.org/
-
-## Trademarks
-"Windows" is a trademark of Microsoft Corporation. This project is not
-affiliated with, endorsed by, or sponsored by Microsoft, WineHQ, CodeWeavers,
-or the Boxedwine project.
-
-## AOE 1997 Trial (Microsoft / Ensemble Studios)
-- Original noncommercial trial distribution obtained from https://www.boxedwine.org/wp-content/uploads/2018/02/MSAoE.exe
-- The EULA shipped with the trial is included as `trial-eula.txt` and in the browser bundle.
-- The game data in `demo/aoe-vn-trial.css` is a ZIP-format archive containing the trial's resource files and an adapted community language resource. This is not a full Rise of Rome copy.
-
-## Vietnamese translation (community aoe.vn)
-- Original Vietnamese translation resource: https://beyeucup.aoe.vn/cach-choi-aoe/huong-dan-tai-va-cai-dat-ban-aoe-viet-hoa-chuan-tieng-viet-5752.html
-- The adapted `Language.dll` uses the source's TCVN3 strings and points to the custom UmiVN font name for the emulated environment.
-- Attribution to aoe.vn for the translated strings. AOE VN Web is independently maintained.
-
-## UmiVN font mapping
-- `assets/vn-wine-overlay.css` is a ZIP-format Wine overlay. The two remapped fonts are derived from Liberation Sans, subject to the SIL Open Font License 1.1, with their family renamed to `UmiVN` to avoid the reserved font name `Liberation`.
-- The original SIL Open Font License and copyright notices are preserved inside the overlay ZIP.
-- Source for generating this font overlay from the upstream files is `scripts/build-vn-overlay.py`. No restricted TCVN3 font collections are included in this overlay.
-
-## Optional local Rise of Rome package
-- Full game and CD media are supplied locally and excluded from Git and static-site builds. Runtime GPL/LGPL licenses do not license the commercial game content.
-- Local preparation preserves the source game executable bytes and changes only the translation DLL font-name resources to use the OFL UmiVN font already documented above.
-- The Wine overlay uses the supplied CD media through a normal folder/CD-drive mapping and ordinary installation registry paths. No host Windows registry or font installation is performed.
-
-## Personal Vietnamese overlay for Viva La RTS
-- `assets/vivalarts-vi.json` contains newly authored Vietnamese UI translations. `scripts/vivalarts-translator.js` applies them to the user's current `https://vivalarts.com` tab; `assets/vivalarts-vi.user.js` is the generated standalone script.
-- These files contain no copied Viva La RTS game engine, art, sound, maps or server code. They use the original page's loaded public modules in place and the browser's installed Arial fallback for Unicode text.
-- Viva La RTS and the game rights holders do not endorse this personal translation tool. Game availability and behavior remain controlled by the original website.
+LICENSE GPL-2.0 của repo được giữ lại. Lịch sử Git chứa implementation WindowsAppPlayer/Boxedwine trước bản 2.0; các tệp đó đã được loại khỏi cây mã nguồn hiện tại. Lịch sử và remote được giữ nguyên, không viết lại lịch sử Git.

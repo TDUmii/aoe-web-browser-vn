@@ -22,3 +22,6 @@ saves/
 .env
 .env.*
 .playwright-cli/
+
+# Local visual verification only
+.impeccable/review/
