@@ -10,6 +10,10 @@ Hai phiên Chrome riêng đã tạo/tham gia cùng phòng qua giao diện game, 
 
 Dự án Vercel hiện có `tdu-mi/aoe-web-browser-vn` được xác thực, liên kết và nối repo `TDUmii/aoe-web-browser-vn`; giữ nguyên dự án và lịch sử. API asset và API multiplayer được build trong cùng dự án. Multiplayer vẫn là thử nghiệm: phòng trong bộ nhớ một instance; kết nối Hobby tối đa 300 giây, chưa nối lại hoặc khôi phục trận.
 
+Kiểm tra công khai trực tiếp trên `https://aoe-web-browser-vn.vercel.app/`, không mock hoặc thay tệp cục bộ: hai phiên trình duyệt tạo/tham gia phòng qua menu, vào trận thật, cùng nhận lệnh tại tick 208 và tiến tới tick 405. Hash cả hai bên giống nhau tại tick 100/200/300/400, lần lượt 561398971, 3170169123, 2971227415, 152420466. Không có page error hoặc lỗi WebSocket. Báo cáo `production-qa.json` và ảnh `production-*.png` nằm trong thư mục kiểm tra multiplayer ở trên. Đây là lượt thử ngắn, không kiểm chứng trận dài hoặc các instance khác nhau.
+
+Một số yêu cầu graphics/799.slp, graphics/411.slp, border/20005.slp, sounds/5073.ogg và sounds/-1.ogg trả 404. HEAD trực tiếp cùng đường dẫn trên nguồn Viva La RTS cũng trả 404 cho cả năm tệp; không phải do bộ lọc trên Vercel. Lượt thử vẫn hiển thị quân, nhận lệnh và đồng bộ thế giới. Các endpoint telemetry/bug không được proxy. GitHub Pages trả 200 và trỏ tới Vercel; deployment Vercel được tạo tự động từ commit nhánh main.
+
 ## Cập nhật chuột 3.0.3
 
 Kiểm tra Chrome headless với hai hồ sơ thử riêng: bản công khai 3.0.2 và bản ứng viên dùng mã hỗ trợ mới cùng tài nguyên game thực. Trong đoạn di chuột, số lần vẽ sprite nhỏ lên canvas đang hiển thị giảm từ 158 xuống 0; thuộc tính cursor chuyển từ none sang URL PNG native. Không có page error hoặc tràn ngang. H chọn Nhà chính, kéo tạo vùng chọn và chuột phải có phản hồi trực quan trong trận. Ảnh và báo cáo nằm trong `.impeccable/review/mouse-3.0.3/`.

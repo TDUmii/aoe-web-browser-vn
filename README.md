@@ -12,7 +12,7 @@ Bản 3.0.2 chuyển sang Segoe UI, giảm độ đậm, tăng chữ nhỏ thêm
 
 Bản 3.0.3 chuyển biểu tượng chuột của menu và trận đấu sang con trỏ trình duyệt, giữ hình và điểm bấm tương ứng. Vị trí con trỏ không còn phải đợi game vẽ xong khung hình; các thao tác chọn quân, kéo vùng chọn và ra lệnh vẫn đi qua bộ xử lý gốc.
 
-Bản 3.1.0 thêm máy chủ chơi mạng riêng với phòng, mã mời, thiết lập trận, chat, lệnh theo tick, tạm dừng và kiểm tra đồng bộ. Hai phiên Chrome đã vào cùng trận qua giao diện game, ra lệnh di chuyển và có hash thế giới giống nhau tới tick 600. Đây là thử nghiệm trên một máy chủ; xem giới hạn chơi mạng bên dưới.
+Bản 3.1.0 thêm máy chủ chơi mạng riêng với phòng, mã mời, thiết lập trận, chat, lệnh theo tick, tạm dừng và kiểm tra đồng bộ. Hai phiên Chrome đã vào cùng trận qua giao diện game, ra lệnh di chuyển và có hash thế giới giống nhau tới tick 600 khi chạy cục bộ và tick 400 trong lượt thử trực tiếp trên Vercel. Xem giới hạn chơi mạng bên dưới.
 
 ## Chơi bằng tiếng Việt
 
