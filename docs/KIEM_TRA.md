@@ -1,5 +1,9 @@
 # Kiểm tra 3.0 - 13/11/2026
 
+## Cập nhật phông 3.0.1
+
+Đổi font Canvas sang Tahoma trước khi khởi động, gồm cả measureText và fillText qua cùng font native. Chrome thực ghi nhận bold 16px, 13px, bold 28px và bold 13px đều dùng Tahoma; không còn Copperplate trong các nhánh menu/HUD đã kiểm tra. Ảnh menu, thiết lập, trận đấu, menu tạm dừng và viewport 390px đã kiểm tra không phát sinh tràn ngang. 4/4 tests hiện có đạt. Nét chữ vẫn chịu cách raster palette của bộ máy gốc.
+
 ## Kiểm tra tự động
 
 `npm test`: 4 tests đạt, gồm máy chủ không lộ Git/tệp hệ thống, bộ lọc tài nguyên cố định, dịch chuỗi có placeholder/nội dung đặc biệt và bất biến dữ liệu gameplay khi dịch chiến dịch.

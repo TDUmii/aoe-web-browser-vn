@@ -1,6 +1,6 @@
 {
   "name": "de-che-web",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "private": true,
   "type": "module",
   "description": "Direct AOE browser game with Vietnamese menus and gameplay text",

@@ -3,6 +3,8 @@ const message = document.querySelector('#opening-message');
 const retry = document.querySelector('#try-again');
 import { installDisplayTranslations } from './localize.js?v=3.0.0';
 import { applyCampaignVietnamese } from './campaign-localize.js?v=3.0.0';
+import { installGameFont } from './game-font.js?v=3.0.1';
+installGameFont();
 retry.addEventListener('click', () => location.reload());
 
 try {
@@ -17,7 +19,7 @@ try {
   Object.assign(strings.language, translations);
   Object.assign(strings.languagex, translations);
   for (const id of [102, 103, 104, 110, 113, 116, 119, 122, 125, 128, 131]) {
-    strings.language[id] = strings.languagex[id] = 'Arial';
+    strings.language[id] = strings.languagex[id] = 'Tahoma';
   }
   const games = await import('/assets/games-CIPulCdv.js');
   games.v('aoe1');

@@ -8,6 +8,7 @@ const files = new Map([
   ['/index.html', ['public/index.html', 'text/html; charset=utf-8']],
   ['/boot.js', ['public/boot.js', 'text/javascript; charset=utf-8']],
   ['/localize.js', ['public/localize.js', 'text/javascript; charset=utf-8']],
+  ['/game-font.js', ['public/game-font.js', 'text/javascript; charset=utf-8']],
   ['/campaign-localize.js', ['public/campaign-localize.js', 'text/javascript; charset=utf-8']],
   ['/game.css', ['public/game.css', 'text/css; charset=utf-8']],
   ['/vi-game.json', ['public/vi-game.json', 'application/json; charset=utf-8']],

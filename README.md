@@ -4,6 +4,8 @@
 
 Mở thẳng vào AOE, toàn bộ vùng chơi dành cho game. Bản 3.0 áp dụng tiếng Việt vào dữ liệu mà game thực sự dùng: tên đơn vị/công trình/công nghệ, lệnh, mô tả, tài nguyên, thông báo và nội dung chiến dịch hướng dẫn. Không còn khung iframe hoặc bảng tra từ bên ngoài.
 
+Bản 3.0.1 đổi chữ menu, nhãn trong trận và nội dung Canvas sang Tahoma để dễ đọc tiếng Việt hơn. Phông mới được áp dụng trước khi game đo/vẽ chữ; giữ nguyên cỡ chữ, độ đậm và bố cục của game.
+
 ## Chơi bằng tiếng Việt
 
 - **Chơi đơn > Bản đồ ngẫu nhiên:** thiết lập trận, nhãn trong trận, xây dựng, tạo quân, mô tả trợ giúp, menu tạm dừng và lưu/tải bằng tiếng Việt.

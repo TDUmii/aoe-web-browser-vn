@@ -2,7 +2,7 @@
 
 Giao diện bình thường chỉ có game gốc. Không có thanh thương hiệu, bảng tra từ, sidebar hoặc iframe nhúng Viva La RTS do dự án tự tạo. Giữ nguyên nền, bố cục, nút và các hiệu ứng của AOE; thay nội dung văn bản mà bộ máy hiển thị đọc.
 
-Trang chiếm toàn viewport, nền đen. Game giữ tỉ lệ theo bộ máy gốc, có vùng đen hai bên nếu màn hình không cùng tỉ lệ. Dùng font Arial cho các trường font của AOE để hiển thị tiếng Việt có dấu. Không tạo lại chữ nhãn hiệu nằm trong hình gốc.
+Trang chiếm toàn viewport, nền đen. Game giữ tỉ lệ theo bộ máy gốc, có vùng đen hai bên nếu màn hình không cùng tỉ lệ. Bản 3.0.1 dùng Tahoma, dự phòng Segoe UI/Arial, cho chữ Canvas và các trường font của AOE. Cài phông trước khi engine đo chữ và tạo cache, giữ nguyên cỡ và độ đậm. Không tạo lại chữ nhãn hiệu nằm trong hình gốc.
 
 Màn chờ chỉ hiện thông báo đang mở game và chuẩn bị nhiệm vụ tiếng Việt. Lỗi tải có thông báo tiếng Việt cùng nút thử lại có focus rõ và chiều cao tối thiểu 44px. Màn này ẩn sau khi module khởi động sẵn sàng.
 
