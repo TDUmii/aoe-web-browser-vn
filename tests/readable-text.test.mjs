@@ -28,4 +28,24 @@ test('renderer extension rejects source drift and leaves unrelated modules alone
   const path = '/assets/loadbar-COOfBw5G.js';
   assert.throws(() => patchRenderer(path, 'changed renderer'), /Unsupported text renderer version/);
   assert.equal(patchRenderer('/assets/another.js', 'unchanged'), 'unchanged');
+  assert.throws(() => patchRenderer('/assets/game-n1fFuRY1.js', 'changed game'), /Unsupported text renderer version/);
+});
+
+test('game cursor uses the native helper while preserving the original fallback', () => {
+  const original = 'n&&ie.drawImage(Qn(e,t),O[0]-t.hotX,O[1]-t.hotY),lt(p,n)';
+  const patched = patchRenderer('/assets/game-n1fFuRY1.js', original);
+  const calls = [];
+  const run = new Function('globalThis', 'p', 'n', 'Qn', 'e', 't', 'O', 'ie', 'lt', patched);
+  const canvas = {}, image = {}, frame = { hotX: 3, hotY: 4 };
+  const helper = { update(...args) { calls.push(args); } };
+  const drawImage = (...args) => calls.push(['sprite', ...args]);
+  const cursor = (...args) => calls.push(['legacy', ...args]);
+  run({ __aoeNativeCursor: helper }, canvas, true, () => image, 0, frame, [10, 20], { drawImage }, cursor);
+  assert.deepEqual(calls, [[canvas, image, 3, 4]]);
+  calls.length = 0;
+  run({ __aoeNativeCursor: helper }, canvas, false, () => image, 0, undefined, null, { drawImage }, cursor);
+  assert.deepEqual(calls, [[canvas, null, 0, 0]]);
+  calls.length = 0;
+  run({}, canvas, true, () => image, 0, frame, [10, 20], { drawImage }, cursor);
+  assert.deepEqual(calls, [['sprite', image, 7, 16], ['legacy', canvas, true]]);
 });

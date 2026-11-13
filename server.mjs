@@ -10,6 +10,7 @@ const files = new Map([
   ['/localize.js', ['public/localize.js', 'text/javascript; charset=utf-8']],
   ['/game-font.js', ['public/game-font.js', 'text/javascript; charset=utf-8']],
   ['/readable-text.js', ['public/readable-text.js', 'text/javascript; charset=utf-8']],
+  ['/native-cursor.js', ['public/native-cursor.js', 'text/javascript; charset=utf-8']],
   ['/campaign-localize.js', ['public/campaign-localize.js', 'text/javascript; charset=utf-8']],
   ['/game.css', ['public/game.css', 'text/css; charset=utf-8']],
   ['/vi-game.json', ['public/vi-game.json', 'application/json; charset=utf-8']],

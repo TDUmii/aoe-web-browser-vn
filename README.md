@@ -8,6 +8,8 @@ Bản 3.0.1 đổi chữ menu, nhãn trong trận và nội dung Canvas sang Tah
 
 Bản 3.0.2 chuyển sang Segoe UI, giảm độ đậm, tăng chữ nhỏ thêm 1px và giữ lại các mức nét mờ ở viền chữ thay vì ép mọi pixel thành bật/tắt. Phóng to canvas dùng nội suy mượt hơn. Nền và lớp hộp thoại vẫn được vẽ theo đúng thứ tự của game.
 
+Bản 3.0.3 chuyển biểu tượng chuột của menu và trận đấu sang con trỏ trình duyệt, giữ hình và điểm bấm tương ứng. Vị trí con trỏ không còn phải đợi game vẽ xong khung hình; các thao tác chọn quân, kéo vùng chọn và ra lệnh vẫn đi qua bộ xử lý gốc.
+
 ## Chơi bằng tiếng Việt
 
 - **Chơi đơn > Bản đồ ngẫu nhiên:** thiết lập trận, nhãn trong trận, xây dựng, tạo quân, mô tả trợ giúp, menu tạm dừng và lưu/tải bằng tiếng Việt.

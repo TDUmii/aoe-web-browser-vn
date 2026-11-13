@@ -17,6 +17,8 @@ REA static analysis record: `ev_b4597819ccb1b1499ae5c192e63840c9620b4050681885db
 
 Bản 3.0.2 mở rộng có giới hạn module renderer `loadbar-COOfBw5G.js` khi stream: giữ alpha glyph, chuyển hàm vẽ chữ sang phép pha màu ngay trong palette và gắn palette tại ranh giới frame. Bốn vị trí mã phải khớp duy nhất; nếu bố cục module nguồn thay đổi thì không tự áp dụng patch tùy đoán. Các phép vẽ hình, lớp hộp thoại và điều kiện gameplay không được sửa. Import map phiên bản mới tránh dùng bản renderer cũ từ cache.
 
+Bản 3.0.3 thêm hai điểm thay thế có kiểm tra duy nhất trong `loadbar-COOfBw5G.js` và `game-n1fFuRY1.js`: thay bước vẽ sprite chuột cuối frame bằng native CSS cursor lưu đệm. Nhánh gốc còn làm fallback nếu helper không được cài. Không thay đổi input, simulation, hit testing, lệnh hoặc giao thức mạng.
+
 Module và tài nguyên công khai của nguồn gốc không cấp CORS cho website khác. Bản iframe 2.0 không thể sửa nội dung game, nên 3.0 dùng máy chủ phục vụ tài nguyên theo danh sách đường dẫn cho phép. Máy chủ chỉ GET/HEAD tới host cố định, không chuyển cookie/Authorization, không lấy endpoint riêng tư và không mở URL tùy ý.
 
 Mã hỗ trợ và bản dịch nằm trong repo này. Engine/art/âm thanh được stream từ nguồn công khai khi cần, không đóng gói vào Git. Không bật cờ developer hoặc bỏ kiểm tra quyền của nguồn gốc.

@@ -22,7 +22,7 @@ export default function engine(request, response, pathOverride) {
     headers: { 'User-Agent': 'DeCheWeb/3.0 public-game-loader' },
     timeout: 30000,
   }, source => {
-    if (path === '/assets/loadbar-COOfBw5G.js' && request.method === 'GET' && source.statusCode === 200) {
+    if (['/assets/loadbar-COOfBw5G.js', '/assets/game-n1fFuRY1.js'].includes(path) && request.method === 'GET' && source.statusCode === 200) {
       let text = '';
       source.setEncoding('utf8');
       source.on('data', chunk => { text += chunk; });

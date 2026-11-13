@@ -1,5 +1,13 @@
 # Kiểm tra 3.0 - 13/11/2026
 
+## Cập nhật chuột 3.0.3
+
+Kiểm tra Chrome headless với hai hồ sơ thử riêng: bản công khai 3.0.2 và bản ứng viên dùng mã hỗ trợ mới cùng tài nguyên game thực. Trong đoạn di chuột, số lần vẽ sprite nhỏ lên canvas đang hiển thị giảm từ 158 xuống 0; thuộc tính cursor chuyển từ none sang URL PNG native. Không có page error hoặc tràn ngang. H chọn Nhà chính, kéo tạo vùng chọn và chuột phải có phản hồi trực quan trong trận. Ảnh và báo cáo nằm trong `.impeccable/review/mouse-3.0.3/`.
+
+Thời gian callback vẽ game trung vị 11 ms trước, 10 ms sau; p95 lần lượt 14,3 và 14,4 ms. Đây không phải bằng chứng tăng FPS hoặc đo độ trễ phần cứng. Thay đổi tách vị trí con trỏ khỏi vòng vẽ game. Các kiểm tra đơn vị kiểm tra cache bitmap, điểm bấm, giới hạn kích thước, fallback và patch không đồng thời vẽ sprite.
+
+Chơi mạng vẫn chưa được triển khai trên máy chủ này. Mã giao diện công khai của nguồn có luồng tạo/tham gia phòng và giao thức WebSocket cùng host; dự án chưa có dịch vụ phòng và đồng bộ lệnh theo tick tương ứng. Không tạo hoặc tham gia phòng upstream trong lần kiểm tra này.
+
 ## Cập nhật độ rõ chữ 3.0.2
 
 7/7 tests đạt. Ba kiểm tra mới xác nhận viền chữ có mức phủ trung gian, màu đen của bóng chữ là màu đục, phép vẽ sau có thể che chữ, clipping và chế độ đo chữ nhị phân được giữ, và patch từ chối renderer sai phiên bản.

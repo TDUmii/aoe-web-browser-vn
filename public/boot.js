@@ -5,8 +5,10 @@ import { installDisplayTranslations } from './localize.js?v=3.0.0';
 import { applyCampaignVietnamese } from './campaign-localize.js?v=3.0.0';
 import { installGameFont } from './game-font.js?v=3.0.2';
 import { installReadableText } from './readable-text.js?v=3.0.2';
+import { installNativeCursor } from './native-cursor.js?v=3.0.3';
 installGameFont();
 installReadableText();
+installNativeCursor();
 retry.addEventListener('click', () => location.reload());
 
 try {
