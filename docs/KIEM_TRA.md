@@ -1,36 +1,27 @@
-# Kiểm tra bản 2.0 - 13/11/2026
+# Kiểm tra 3.0 - 13/11/2026
 
-## Kiểm tra có thể chạy lại
+## Kiểm tra tự động
 
-`npm test` chạy test máy chủ bằng Node.js, không cần thư viện: phục vụ trang và JS đúng MIME, HEAD không trả body, từ chối truy cập Git/dữ liệu game cũ/tệp máy chủ và từ chối phương thức ghi.
+`npm test`: 4 tests đạt, gồm máy chủ không lộ Git/tệp hệ thống, bộ lọc tài nguyên cố định, dịch chuỗi có placeholder/nội dung đặc biệt và bất biến dữ liệu gameplay khi dịch chiến dịch.
 
-`node --check app.js` và `node --check server.mjs` đã qua. `git diff --check` không còn lỗi khoảng trắng.
+`node --check` cho boot, API và Worker sinh ra đã qua. `git diff --check` đã qua.
 
-## Kiểm tra trình duyệt
+Kiểm tra trên 12 binary màn chơi thực, parse bằng parser công khai gốc: 12 màn, 48 phần văn bản đã dịch; so sánh sâu mọi thuộc tính khác giống nguyên bản, gồm bản đồ, đơn vị, trigger, người chơi và điều kiện thắng. Guard phát hiện sai tên màn/phiên bản đã qua. Các bản binary dùng cho nghiên cứu không đưa vào Git.
 
-Chrome 157 trên Windows, viewport 1440 x 900 và 390 x 844.
+1.756 bản dịch ID được so với 2.522 mục inventory gốc: không sai tham số printf hoặc tham số đánh số. Một phần inventory gốc là metadata/font/tên riêng hoặc mã lỗi Windows, nên tỷ lệ số ID không tương đương tỷ lệ nội dung chơi.
 
-| Phạm vi | Kết quả |
-| --- | --- |
-| Fixture cách ly mạng | Tìm thuật ngữ không dấu/chữ hoa, không có kết quả, đóng hướng dẫn bằng Escape và trả focus đã qua. |
-| Fixture cách ly mạng | Hủy tải lại hoặc Escape không điều hướng iframe; xác nhận tải lại điều hướng đúng một lần. |
-| Fixture cách ly mạng | Ngoại tuyến và trở lại online không tải lại iframe. |
-| Fixture cách ly mạng | Vào/thoát fullscreen toàn player, nhãn và trạng thái nút cập nhật. |
-| Fixture cách ly mạng | Thông báo sau 25 giây tải chậm và phục hồi sau khi iframe tải muộn đã qua bằng đồng hồ ảo. |
-| Fixture service worker | Chỉ unregister hai scriptURL cũ chính xác của dự án; giữ worker của project khác. Không thử mọi phiên bản worker từng tồn tại trên thiết bị người dùng. |
-| Live Viva La RTS | Khung sandbox mở được game picker; chọn Age of Empires, Single Player, Random Map và Start Game tới gameplay thật. Thử chọn dân và ra lệnh di chuyển. |
-| Giao diện | Không tràn ngang ở hai viewport đã kiểm tra. Hướng dẫn và glossary cuộn dọc trên điện thoại. |
+## Kiểm tra thực tế bằng Chrome
 
-Kiểm tra live không dùng phản hồi giả. Kiểm tra fixture chỉ xác nhận hành vi wrapper, không chứng minh engine game hoạt động. Browser không ghi nhận page error trong lượt live đã thực hiện.
+Viewport chính 1440 x 900, hồ sơ thử tạm, không dùng hồ sơ trình duyệt cá nhân.
 
-Reviewer độc lập xem bốn ảnh desktop/mobile và mã wrapper, đưa disposition `ship`. Detector Impeccable chỉ chạy được chế độ regex do thiếu parser; không coi đó là kiểm toán contrast bằng computed styles.
+- Mở trực tiếp menu AOE tiếng Việt, không có toolbar hỗ trợ ngoài.
+- Vào Chơi đơn, Bản đồ ngẫu nhiên và thiết lập trận tiếng Việt.
+- Vào bản đồ, chọn dân, mở bảng xây dựng và xây Nhà dân với chi phí 30 gỗ.
+- Chọn Nhà chính, tạo Dân làng với chi phí 50 lương thực và thấy tiến trình huấn luyện.
+- Mở menu trong trận, lưu tên `Kiem tra Viet`, mở danh sách tải và tải lại bản lưu.
+- Vào chiến dịch Ai Cập, mở màn Săn bắn, đọc hướng dẫn/mục tiêu Tạo 7 dân làng bằng tiếng Việt rồi vào bản đồ nhiệm vụ.
+- Link Sites đã được xuất bản thành công và người dùng yêu cầu đặt công khai. HTTP không đăng nhập trả 200.
 
-Chưa kiểm tra toàn bộ chiến dịch, multiplayer, cloud save, trình đọc màn hình hoặc thiết bị cảm ứng thật. Không suy ra độ tương đương hoàn toàn với AOE gốc.
+Ảnh các bước nằm trong `.impeccable/review/v3/` trên máy phát triển, không đưa vào repo. Không dùng fixture giả để tuyên bố engine hoạt động.
 
-## Dọn dữ liệu cũ trên máy
-
-Đã xóa các bộ game/giả lập cũ tại `D:\Code\AOE-Web-Browser` (gồm `local-game`, `_site`, `64`, `demo`, `fs`, `runtime` và mã nguồn cũ), gói `D:\Download\aoe-full.zip`, dự án thử `D:\Code\AOE-Web-VN` và log QA cũ. Giữ `.git` và lịch sử; không viết lại lịch sử. Shortcut Desktop được cập nhật về URL trang chủ mới.
-
-Kiểm tra cây nguồn mới không có EXE, DLL, ZIP, ISO hoặc WASM. Không tuyên bố đã tìm mọi bản game trên toàn bộ ổ đĩa.
-
-Microsoft Defender Quick Scan hoàn thành lúc 08:25 ngày 13/11/2026 (giờ Việt Nam), không có phát hiện mới trong khoảng quét. Đây là quick scan, không phải chứng nhận toàn bộ máy sạch mã độc và không xác định lại các file đã xóa có nhiễm hay không.
+Chưa chơi hết 12 nhiệm vụ tới chiến thắng, chưa kiểm tra mọi công nghệ/đơn vị, trình đọc màn hình hoặc thiết bị cảm ứng thật. Chơi mạng không có backend trên host dự án; các endpoint telemetry/lobby/bug của nguồn gốc không được proxy. Một số yêu cầu tới các đường đó trả lỗi mạng dự kiến, không được coi là lỗi asset AOE.

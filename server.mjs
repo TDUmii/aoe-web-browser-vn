@@ -1,18 +1,26 @@
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
+import engine, { allowedAsset } from './api/engine.js';
 
 const files = new Map([
-  ['/', ['index.html', 'text/html; charset=utf-8']],
-  ['/index.html', ['index.html', 'text/html; charset=utf-8']],
-  ['/app.js', ['app.js', 'text/javascript; charset=utf-8']],
-  ['/style.css', ['style.css', 'text/css; charset=utf-8']],
-  ['/favicon.svg', ['favicon.svg', 'image/svg+xml']],
+  ['/', ['public/index.html', 'text/html; charset=utf-8']],
+  ['/index.html', ['public/index.html', 'text/html; charset=utf-8']],
+  ['/boot.js', ['public/boot.js', 'text/javascript; charset=utf-8']],
+  ['/localize.js', ['public/localize.js', 'text/javascript; charset=utf-8']],
+  ['/campaign-localize.js', ['public/campaign-localize.js', 'text/javascript; charset=utf-8']],
+  ['/game.css', ['public/game.css', 'text/css; charset=utf-8']],
+  ['/vi-game.json', ['public/vi-game.json', 'application/json; charset=utf-8']],
+  ['/vi-ui.json', ['public/vi-ui.json', 'application/json; charset=utf-8']],
+  ['/campaign-vi.json', ['public/campaign-vi.json', 'application/json; charset=utf-8']],
+  ['/favicon.svg', ['public/favicon.svg', 'image/svg+xml']],
 ]);
 
 export function makeServer() {
   return createServer(async (request, response) => {
-    const entry = files.get(new URL(request.url, 'http://localhost').pathname);
+    const path = new URL(request.url, 'http://localhost').pathname;
+    if (allowedAsset(path)) return engine(request, response, path);
+    const entry = files.get(path);
     if (!['GET', 'HEAD'].includes(request.method)) {
       response.writeHead(405, { Allow: 'GET, HEAD' }).end();
       return;

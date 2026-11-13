@@ -1,25 +1,26 @@
-# Phân tích Viva La RTS bằng REA
+# Phân tích REA và bản Việt hóa trong game
 
-Ngày kiểm tra: 13/11/2026. Đích: https://vivalarts.com/.
+Ngày kiểm tra: 13/11/2026. Nguồn công khai: https://vivalarts.com/.
 
-## Bằng chứng
+## Kết quả có thể dùng để triển khai
 
-- HTTP GET trang chủ trả 200. Entry hiện tại là `/assets/index-CjR_UlqN.js`.
-- REA `analyze_javascript_application` đọc tĩnh các module danh mục game và shell đã tải công khai. Bản ghi gốc: `ev_6f151ba4026478401979c45aab6d5957d92b5aa0fab235b2f4d79f368cfa5af1`. Phân tích được giới hạn ở hai module, không phải toàn bộ game.
-- `games-CIPulCdv.js` khai báo Age of Empires (`aoe1`) là game công khai, gốc tài nguyên `/dev-assets/aoe1`. Lựa chọn game được nhớ trên origin Viva La RTS.
-- REA `capture_browser_scenario` khởi chạy Chrome với hồ sơ tạm, mở trang và bấm thẻ AOE. Bản ghi: `ev_afee282393f1982bfd4b2d4aa30637ab4f8ad497528bea91551b31e46998ee04`. Trình duyệt tạm đã được REA đóng sau capture.
-- Entry có route phát triển `aoe1map`, nhưng `entry-oM5BGyMI.js` yêu cầu devmode. Giao diện mới không dùng route này hoặc tự bật cờ nội bộ.
-- Không tìm thấy API `postMessage` để wrapper tự chọn game trong các module đã xem. Không coi việc chưa thấy là bằng chứng không có API ở mọi module khác.
-- Response trang chủ tại thời điểm kiểm tra không có `X-Frame-Options` hoặc CSP chặn nhúng. Đây là quan sát kỹ thuật, không phải giấy phép sao chép hay cam kết trang sẽ cho nhúng mãi.
+- `strings-D2PwFU4r.js` xuất đối tượng chứa `language` và `languagex` có thể cập nhật. Lookup trong `strings-BfFs0tko.js` đọc `languagex[id]` trước, nên bản dịch được áp dụng vào menu, nhãn và trợ giúp thực tế của game.
+- Bộ vẽ AOE dùng Unicode qua Canvas 2D, rồi chuyển mặt nạ chữ sang ảnh palette. Thay trường font bằng Arial cho phép vẽ dấu tiếng Việt.
+- `games-CIPulCdv.js` có bộ chọn game công khai. Dùng lựa chọn AOE bình thường trước khi import entry gốc để bỏ màn chọn nhiều game. Không dùng `startAoe1Link` vì đường đó có gate developer.
+- Entry AOE nhập gián tiếp module index qua loadbar. Không gọi thêm `aoe1Flow()` song song, tránh hai luồng khởi động.
+- `scenario-CCQEnV9K.js` xuất bộ nạp chiến dịch có bộ nhớ đệm. Bản dịch cập nhật đối tượng nhiệm vụ trước khi phần giới thiệu, gợi ý và màn sau chiến thắng sử dụng các trường văn bản.
+- Một số nhãn HUD, menu, lưu/tải viết thẳng trong code. Bộ dịch bổ sung dùng phép khớp chuỗi chính xác và một vài mẫu số lượng, xử lý cả đo chữ và vẽ chữ. Không viết lại lệnh cheat, ID hoặc logic simulation.
 
-## Quyết định triển khai
+REA static analysis record: `ev_b4597819ccb1b1499ae5c192e63840c9620b4050681885db08d43af670c78c47`. Phạm vi gồm các module entry, lookup chữ, renderer và loader đã chọn; graph có giới hạn, không phải audit toàn bộ game. REA source-recovery qua Wakaru không khả dụng trên môi trường Windows này; dự án không tuyên bố đã thu được source gốc trước biên dịch hay backend.
 
-Người dùng chọn chơi Viva La RTS ngay trong website mới với giao diện hỗ trợ tiếng Việt. Vì vậy bản 2.0 dùng iframe tải từ origin gốc, kèm hướng dẫn chọn AOE lần đầu. Không sao chép engine, tài nguyên thương mại hoặc backend; không dùng giả lập hay các bộ game EXE cũ.
+## Cách phục vụ
 
-Khung game cho phép script, cùng origin nội bộ của Viva, biểu mẫu, khóa con trỏ, popup và fullscreen cần cho game. Không cấp quyền tải file hoặc điều hướng trang cha qua sandbox. Nút mở tab riêng là lối khôi phục khi game không chạy trong khung.
+Module và tài nguyên công khai của nguồn gốc không cấp CORS cho website khác. Bản iframe 2.0 không thể sửa nội dung game, nên 3.0 dùng máy chủ phục vụ tài nguyên theo danh sách đường dẫn cho phép. Máy chủ chỉ GET/HEAD tới host cố định, không chuyển cookie/Authorization, không lấy endpoint riêng tư và không mở URL tùy ý.
 
-Trang legal của Viva: https://vivalarts.com/legal/index.html. Trang ghi đây là dự án fan phi thương mại và nội dung thuộc các chủ sở hữu. Chưa tìm thấy giấy phép phát hành lại engine hoặc tài nguyên.
+Mã hỗ trợ và bản dịch nằm trong repo này. Engine/art/âm thanh được stream từ nguồn công khai khi cần, không đóng gói vào Git. Không bật cờ developer hoặc bỏ kiểm tra quyền của nguồn gốc.
 
 ## Giới hạn
 
-Đây là phân tích module công khai và hành vi trình duyệt có giới hạn, không phải audit bảo mật toàn bộ Viva La RTS. Không kết luận tương đương hoàn toàn với AOE gốc, không bảo đảm multiplayer, save cloud hoặc mọi chiến dịch. Giao diện hỗ trợ không thể sửa menu game trên origin khác; menu có thể vẫn bằng tiếng Anh.
+Phần chơi bản đồ ngẫu nhiên và 12 màn hướng dẫn Ai Cập đã Việt hóa nội dung. Các chiến dịch khác chưa dịch toàn bộ cốt truyện; âm thanh/video và chữ nằm trong ảnh gốc chưa được thay. Bộ khớp chuỗi hiển thị có thể dịch cả một tên người chơi/bản lưu trùng chính xác nhãn giao diện. Module có hash phụ thuộc phiên bản nguồn; cần cập nhật nếu nguồn gốc thay đổi.
+
+REA capture bổ sung ở cuối lượt đã hoàn thành điều hướng/chờ nhưng gặp timeout khi xác nhận dọn trình duyệt. Không coi lượt đó là bằng chứng kiểm thử trọn vẹn; các kiểm tra Chrome độc lập và ảnh thật trong báo cáo kiểm tra được dùng để xác minh gameplay. Trình duyệt tạm của lượt REA được kiểm tra và dọn sau đó.

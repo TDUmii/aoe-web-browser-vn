@@ -1,11 +1,12 @@
 {
   "name": "de-che-web",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "private": true,
   "type": "module",
-  "description": "Viva La RTS embedded player with Vietnamese support",
+  "description": "Direct AOE browser game with Vietnamese menus and gameplay text",
   "scripts": {
     "start": "node server.mjs",
-    "test": "node --test tests/site.test.mjs"
+    "test": "node --test tests/*.test.mjs",
+    "build:worker": "node scripts/build-worker.mjs dist"
   }
 }

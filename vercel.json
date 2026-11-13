@@ -1,0 +1,14 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "buildCommand": "",
+  "installCommand": "",
+  "outputDirectory": "public",
+  "functions": { "api/engine.js": { "maxDuration": 60 } },
+  "rewrites": [
+    { "source": "/assets/:path*", "destination": "/api/engine?path=/assets/:path*" },
+    { "source": "/dev-assets/aoe1/web/:path*", "destination": "/api/engine?path=/dev-assets/aoe1/web/:path*" },
+    { "source": "/dev-assets/graphics/ui/:path*", "destination": "/api/engine?path=/dev-assets/graphics/ui/:path*" },
+    { "source": "/art/logo/:path*", "destination": "/api/engine?path=/art/logo/:path*" }
+  ]
+}
