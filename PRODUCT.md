@@ -21,11 +21,11 @@ Mở thẳng vào game, dành toàn bộ vùng hiển thị cho game. Tiếng Vi
 - Các chiến dịch khác chưa dịch toàn bộ cốt truyện; âm thanh/video và một số chữ trong hình gốc vẫn nguyên bản.
 - Lấy engine và dữ liệu công khai từ Viva La RTS qua máy chủ cùng origin; không chứa game EXE/crack/giả lập trong source.
 - Không thay số liệu, bản đồ, đơn vị, trigger hay điều kiện thắng khi dịch.
-- Repo GitHub hiện có và lịch sử được giữ nguyên. Chơi mạng chưa triển khai trên host này.
+- Repo GitHub hiện có và lịch sử được giữ nguyên. Chơi mạng 3.1 thử nghiệm trên một máy chủ, đã kiểm tra hai client cùng trận; chưa có điều phối nhiều instance hoặc nối lại sau ngắt mạng.
 
 ## Operating Context
 
-Chơi tại https://de-che-tieng-viet.famedeasel1.chatgpt.site/. Trang GitHub Pages cũ chuyển hướng tới đây. Cần Internet; dữ liệu lưu phụ thuộc trình duyệt và origin đang chơi.
+Chơi tại https://aoe-web-browser-vn.vercel.app/ thuộc Vercel của chủ repo. Trang GitHub Pages cũ chuyển hướng tới đây. Cần Internet; dữ liệu lưu phụ thuộc trình duyệt và origin đang chơi. Vercel Hobby giới hạn kết nối Function 300 giây; multiplayer trên đó dành cho thử ngắn, trận dài cần máy chủ Node duy nhất hoặc bộ điều phối bền vững.
 
 ## Brand Commitments
 

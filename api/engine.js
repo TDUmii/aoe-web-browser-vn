@@ -1,6 +1,7 @@
 import https from 'node:https';
 import { assetPath } from '../asset-policy.js';
 import { patchRenderer } from '../renderer-patch.js';
+import { patchMultiplayer } from '../multiplayer/patch.mjs';
 
 export function allowedAsset(path) {
   return assetPath(path) !== null;
@@ -22,13 +23,13 @@ export default function engine(request, response, pathOverride) {
     headers: { 'User-Agent': 'DeCheWeb/3.0 public-game-loader' },
     timeout: 30000,
   }, source => {
-    if (['/assets/loadbar-COOfBw5G.js', '/assets/game-n1fFuRY1.js'].includes(path) && request.method === 'GET' && source.statusCode === 200) {
+    if (['/assets/loadbar-COOfBw5G.js', '/assets/game-n1fFuRY1.js', '/assets/model-BbESgICJ.js'].includes(path) && request.method === 'GET' && source.statusCode === 200) {
       let text = '';
       source.setEncoding('utf8');
       source.on('data', chunk => { text += chunk; });
       source.on('end', () => {
         try {
-          const body = patchRenderer(path, text);
+          const body = patchMultiplayer(path, patchRenderer(path, text));
           response.writeHead(200, { 'Content-Type': 'text/javascript; charset=utf-8', 'Cache-Control': 'no-cache', 'X-Content-Type-Options': 'nosniff' });
           response.end(body);
         } catch {

@@ -32,6 +32,8 @@ test('display translation preserves commands, whitespace, counts and user conten
   const phrases = { Cancel: 'Hủy', Off: 'Tắt', 'Queue a farm to reseed (right click: take one back)': 'Gieo lại ruộng' };
   assert.equal(translateText('  Cancel ', phrases), '  Hủy ');
   assert.equal(translateText('Player 8', phrases), 'Người chơi 8');
+  assert.equal(translateText('Room A12BC (public)', phrases), 'Phòng A12BC (công khai)');
+  assert.equal(translateText('Room A12BC (private)', phrases), 'Phòng A12BC (riêng tư)');
   assert.equal(translateText('Edge Scroll: Off', phrases), 'Cuộn mép: Tắt');
   assert.equal(translateText(' · Game time 01:42', phrases), ' · Thời gian trận 01:42');
   assert.equal(translateText('Queue a farm to reseed (right click: take one back) (3)', phrases), 'Gieo lại ruộng (3)');

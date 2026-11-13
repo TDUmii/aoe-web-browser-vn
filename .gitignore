@@ -27,3 +27,6 @@ saves/
 .impeccable/review/
 .vercel/
 dist/
+
+.vercel
+.env*

@@ -1,7 +1,7 @@
 const opening = document.querySelector('#opening');
 const message = document.querySelector('#opening-message');
 const retry = document.querySelector('#try-again');
-import { installDisplayTranslations } from './localize.js?v=3.0.0';
+import { installDisplayTranslations } from './localize.js?v=3.1.0';
 import { applyCampaignVietnamese } from './campaign-localize.js?v=3.0.0';
 import { installGameFont } from './game-font.js?v=3.0.2';
 import { installReadableText } from './readable-text.js?v=3.0.2';
@@ -14,7 +14,7 @@ retry.addEventListener('click', () => location.reload());
 try {
   // These are public browser modules identified by the REA investigation.
   // Patch the dictionaries before loading modules that cache display labels.
-  const [translations, phrases, campaigns] = await Promise.all(['vi-game.json', 'vi-ui.json', 'campaign-vi.json'].map(file => fetch(`${file}?v=3.0.0`).then(response => {
+  const [translations, phrases, campaigns] = await Promise.all(['vi-game.json', 'vi-ui.json', 'campaign-vi.json'].map(file => fetch(`${file}?v=3.1.0`).then(response => {
     if (!response.ok) throw new Error('translation-unavailable');
     return response.json();
   })));

@@ -4,6 +4,8 @@ export function translateText(text, phrases) {
   const lookup = key => Object.hasOwn(phrases, key) && typeof phrases[key] === 'string' ? phrases[key] : undefined;
   let translated = lookup(value);
   if (!translated && /^Player \d+$/.test(value)) translated = value.replace('Player ', 'Người chơi ');
+  const room = /^Room ([A-Z0-9]{5}) \((public|private)\)$/.exec(value);
+  if (!translated && room) translated = `Phòng ${room[1]} (${room[2] === 'public' ? 'công khai' : 'riêng tư'})`;
   if (!translated && value.startsWith('Edge Scroll: ')) {
     const state = value.slice(13);
     translated = `Cuộn mép: ${lookup(state) ?? state}`;

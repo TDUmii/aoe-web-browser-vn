@@ -1,5 +1,15 @@
 # Kiểm tra 3.0 - 13/11/2026
 
+## Chơi mạng và Vercel 3.1.0
+
+Máy chủ WebSocket riêng hỗ trợ native protocol 11, mã phòng năm ký tự, tạo/tham gia phòng, thiết lập, vị trí người chơi/AI, chat, bắt đầu, ready barrier, đồng bộ lệnh theo tick 50 ms, tạm dừng và phát hiện hash khác nhau. Có giới hạn số phòng, kết nối, kích thước lệnh, hàng đợi và kiểm tra Origin.
+
+Hai phiên Chrome riêng đã tạo/tham gia cùng phòng qua giao diện game, vào bản đồ thật và tiến tới tick 690. Sau thao tác chọn quân và chuột phải, hai client có cùng hash tại tick 100, 200, 300, 400, 500, 600; hash tick 600 là 39550200 ở cả hai bên. Không có page error. Bằng chứng nằm ở `.impeccable/review/multiplayer-3.1.0/qa.json` và ảnh trong cùng thư mục. Đây là kiểm tra máy chủ Node cục bộ một tiến trình, không chứng minh tính bền vững nhiều instance Vercel.
+
+18 tests đạt, gồm protocol hai client, AI xen giữa chỗ người thật, kiểm tra dữ liệu biên và WebSocket thật chấp nhận Origin đúng/từ chối Origin khác. Chat/tạm dừng được kiểm tra protocol, chưa thử bằng giao diện trong lượt hai client này.
+
+Dự án Vercel hiện có `tdu-mi/aoe-web-browser-vn` được xác thực, liên kết và nối repo `TDUmii/aoe-web-browser-vn`; giữ nguyên dự án và lịch sử. API asset và API multiplayer được build trong cùng dự án. Multiplayer vẫn là thử nghiệm: phòng trong bộ nhớ một instance; kết nối Hobby tối đa 300 giây, chưa nối lại hoặc khôi phục trận.
+
 ## Cập nhật chuột 3.0.3
 
 Kiểm tra Chrome headless với hai hồ sơ thử riêng: bản công khai 3.0.2 và bản ứng viên dùng mã hỗ trợ mới cùng tài nguyên game thực. Trong đoạn di chuột, số lần vẽ sprite nhỏ lên canvas đang hiển thị giảm từ 158 xuống 0; thuộc tính cursor chuyển từ none sang URL PNG native. Không có page error hoặc tràn ngang. H chọn Nhà chính, kéo tạo vùng chọn và chuột phải có phản hồi trực quan trong trận. Ảnh và báo cáo nằm trong `.impeccable/review/mouse-3.0.3/`.

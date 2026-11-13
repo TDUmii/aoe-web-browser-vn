@@ -2,10 +2,11 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
   "buildCommand": "",
-  "installCommand": "",
+  "installCommand": "npm ci --omit=dev",
   "outputDirectory": "public",
-  "functions": { "api/engine.js": { "maxDuration": 60 } },
+  "functions": { "api/engine.js": { "maxDuration": 60 }, "api/multiplayer.js": { "maxDuration": 300 } },
   "rewrites": [
+    { "source": "/ws/:hash", "destination": "/api/multiplayer" },
     { "source": "/assets/:path*", "destination": "/api/engine?path=/assets/:path*" },
     { "source": "/dev-assets/aoe1/web/:path*", "destination": "/api/engine?path=/dev-assets/aoe1/web/:path*" },
     { "source": "/dev-assets/graphics/ui/:path*", "destination": "/api/engine?path=/dev-assets/graphics/ui/:path*" },

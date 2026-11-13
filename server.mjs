@@ -2,6 +2,7 @@ import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 import engine, { allowedAsset } from './api/engine.js';
+import { attachMultiplayer } from './multiplayer/websocket.mjs';
 
 const files = new Map([
   ['/', ['public/index.html', 'text/html; charset=utf-8']],
@@ -20,7 +21,7 @@ const files = new Map([
 ]);
 
 export function makeServer() {
-  return createServer(async (request, response) => {
+  const server = createServer(async (request, response) => {
     const path = new URL(request.url, 'http://localhost').pathname;
     if (allowedAsset(path)) return engine(request, response, path);
     const entry = files.get(path);
@@ -44,11 +45,14 @@ export function makeServer() {
       response.writeHead(500).end('Không đọc được tài nguyên trang.');
     }
   });
+  attachMultiplayer(server);
+  return server;
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const port = Number(process.env.PORT || 8097);
   const server = makeServer();
   server.on('error', error => { console.error(error.message); process.exitCode = 1; });
-  server.listen(port, '127.0.0.1', () => console.log(`Đế Chế Web: http://127.0.0.1:${port}`));
+  const host = process.env.HOST || '127.0.0.1';
+  server.listen(port, host, () => console.log(`Đế Chế Web: http://${host}:${port}`));
 }
